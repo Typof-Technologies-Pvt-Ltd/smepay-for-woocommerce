@@ -5,7 +5,7 @@
  * Description: Accept UPI payments via SMEPay with QR code widget on your WooCommerce website.
  * Version: 1.0.0
  *
- * Author: Typof
+ * Author: SMEPay
  * Author URI: https://smepay.io/
  *
  * Text Domain: smepay-for-woocommerce
