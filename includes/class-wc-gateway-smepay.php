@@ -1,0 +1,420 @@
+<?php
+/**
+ * WC_Gateway_SMEPay class
+ *
+ * @author   SomewhereWarm <info@somewherewarm.gr>
+ * @package  WooCommerce SMEPay Payments Gateway 
+ * @since    1.0.0
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Dummy Gateway.
+ *
+ * @class    WC_Gateway_SMEPay
+ * @version  1.10.0
+ */
+class WC_Gateway_SMEPay extends WC_Payment_Gateway {
+
+	use SMEPay_Utils;
+
+	/**
+	 * Payment gateway instructions.
+	 * @var string
+	 *
+	 */
+	protected $instructions;
+
+	/**
+	 * Whether the gateway is visible for non-admin users.
+	 * @var boolean
+	 *
+	 */
+	protected $hide_for_non_admin_users;
+
+	/**
+	 * Unique id for the gateway.
+	 * @var string
+	 *
+	 */
+	public $id = 'smepay';
+
+	protected $client_id;
+    protected $client_secret;
+
+	/**
+	 * Constructor for the gateway.
+	 */
+	public function __construct() {
+		
+		$this->icon               = apply_filters( 'woocommerce_smepay_gateway_icon', '' );
+		$this->has_fields         = false;
+
+		$this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
+		$this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
+
+		// Load the settings.
+		$this->init_form_fields();
+		$this->init_settings();
+
+		// Define user set variables.
+		$this->title                    = $this->get_option( 'title' );
+		$this->description              = $this->get_option( 'description' );
+		$this->instructions             = $this->get_option( 'instructions', $this->description );
+		$this->hide_for_non_admin_users = $this->get_option( 'hide_for_non_admin_users' );
+		$this->client_id = $this->get_option('client_id');
+        $this->client_secret = $this->get_option('client_secret');
+
+		// Actions.
+		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+		add_action( 'woocommerce_scheduled_subscription_payment_dummy', array( $this, 'process_subscription_payment' ), 10, 2 );
+        add_action('woocommerce_thankyou', [$this, 'send_validate_order_request'], 10, 1);
+
+         // We need custom JavaScript to obtain a token
+        add_action( 'wp_enqueue_scripts', [$this, 'payment_scripts'] );
+	}
+
+
+	public function payment_scripts() {
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
+		$checkout_layout = $this->smepay_detect_checkout_layout_backend();
+
+        // we need JavaScript to process a token only on cart/checkout pages, right?
+        if( ! is_cart() && ! is_checkout() && ! isset( $_GET[ 'pay_for_order' ] ) && ! is_order_received_page() ) {
+            return;
+        }
+
+        // Enqueue external checkout widget
+        wp_enqueue_script(
+            'smepay-checkout',
+            'https://typof.co/smepay/checkout.js',
+            [],
+            SMEPAY_WC_VERSION,
+            true
+        );
+
+        // if our payment gateway is disabled, we do not have to enqueue JS too
+        if( 'no' === $this->enabled ) {
+            return;
+        }
+
+        // no reason to enqueue JavaScript if API keys are not set
+        if( empty( $this->client_id ) || empty( $this->client_secret ) ) {
+            return;
+        }
+
+        // do not work with card detailes without SSL
+        if( ! is_ssl() ) {
+            // return;
+        }
+
+        $plugin_url = plugin_dir_url(__FILE__);
+
+        // Localize script for AJAX usage
+        wp_localize_script('smepay-handler', 'smepay_data', [
+            'ajax_url' => admin_url('admin-ajax.php'),
+            'nonce'    => wp_create_nonce('smepay_nonce'),
+        ]);
+
+        // don't load on block theme layout
+		if( 'block' === $checkout_layout['layout'] ) {
+            return;
+        }
+
+        // Enqueue local handler with plugin version for cache busting
+        wp_enqueue_script(
+            'smepay-handler',
+            SMEPAY_WC_URL . 'resources/js/frontend/smepay-checkout-handler.js',
+            ['jquery'],
+            SMEPAY_WC_VERSION,
+            true
+        );
+
+    }
+
+	/**
+	 * Initialise Gateway Settings Form Fields.
+	 */
+	public function init_form_fields() {
+
+		$this->form_fields = array(
+			'enabled' => array(
+				'title'   => __( 'Enable/Disable', 'smepay-for-woocommerce' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'Enable Dummy Payments', 'smepay-for-woocommerce' ),
+				'default' => 'yes',
+			),
+			'hide_for_non_admin_users' => array(
+				'type'    => 'checkbox',
+				'label'   => __( 'Hide at checkout for non-admin users', 'smepay-for-woocommerce' ),
+				'default' => 'no',
+			),
+			'title' => array(
+				'title'       => __( 'Title', 'smepay-for-woocommerce' ),
+				'type'        => 'text',
+				'description' => __( 'This controls the title which the user sees during checkout.', 'smepay-for-woocommerce' ),
+				'default'     => _x( 'Dummy Payment', 'Dummy payment method', 'smepay-for-woocommerce' ),
+				'desc_tip'    => true,
+			),
+			'description' => array(
+				'title'       => __( 'Description', 'smepay-for-woocommerce' ),
+				'type'        => 'textarea',
+				'description' => __( 'Payment method description that the customer will see on your checkout.', 'smepay-for-woocommerce' ),
+				'default'     => __( 'The goods are yours. No money needed.', 'smepay-for-woocommerce' ),
+				'desc_tip'    => true,
+			),
+			'client_id' => [
+                'title' => 'Client ID',
+                'type'  => 'text'
+            ],
+            'client_secret' => [
+                'title' => 'Client Secret',
+                'type'  => 'password'
+            ],
+			'result' => array(
+				'title'    => __( 'Payment result', 'smepay-for-woocommerce' ),
+				'desc'     => __( 'Determine if order payments are successful when using this gateway.', 'smepay-for-woocommerce' ),
+				'id'       => 'woo_dummy_payment_result',
+				'type'     => 'select',
+				'options'  => array(
+					'success'  => __( 'Success', 'smepay-for-woocommerce' ),
+					'failure'  => __( 'Failure', 'smepay-for-woocommerce' ),
+				),
+				'default' => 'success',
+				'desc_tip' => true,
+			)
+		);
+	}
+
+	/**
+	 * Process the payment and return the result.
+	 *
+	 * @param  int  $order_id
+	 * @return array
+	 */
+	public function process_payment( $order_id ) {
+
+		$payment_result = $this->get_option( 'result' );
+		$order = wc_get_order( $order_id );
+
+		$slug  = $this->create_smepay_order($order);
+
+        if (!$slug) {
+            // Add error notice
+            wc_add_notice( 
+		        __( 'Failed to initiate SMEPay session. Please try again.', 'smepay-for-woocommerce' ), 
+		        'error' 
+		    );
+
+            return [
+                'result'   => 'failure'
+            ];
+        }
+
+        // Save slug for tracking
+        $order->update_meta_data('_smepay_slug', $slug);
+        $order->save();
+
+        $checkout_layout = $this->smepay_detect_checkout_layout_backend();
+
+		// don't load on block theme layout
+		if( 'block' === $checkout_layout['layout'] ) {
+            $redirect = add_query_arg([
+	            'key'           => $order->get_order_key(),
+	            'redirect_url'  => $order->get_checkout_order_received_url(),
+	            'smepay_slug'   => $slug,
+	        ], $order->get_checkout_payment_url(false)); // don't pass `true` here, you're adding manually
+        } else {
+        	$redirect = ''; // Keep blank to avoid WC auto-redirect
+        }
+
+        
+
+
+		if ( 'success' === $payment_result ) {
+			// Remove cart
+			// WC()->cart->empty_cart();
+
+			return [
+	            'result'       => 'success',
+	            'smepay_slug'  => $slug,
+	            'order_id'     => $order_id,
+	            'order_key'    => $order->get_order_key(),
+	            'redirect_url' => $order->get_checkout_order_received_url(),
+	            'redirect' 	   => $redirect,
+	        ];
+		} else {
+			$message = esc_html__( 'Order payment failed. To make a successful payment using Dummy Payments, please review the gateway settings.', 'smepay-for-woocommerce' );
+			$order->update_status( 'failed', $message );
+			throw new Exception( esc_html( $message ) );
+		}
+	}
+
+	/**
+	 * Process subscription payment.
+	 *
+	 * @param  float     $amount
+	 * @param  WC_Order  $order
+	 * @return void
+	 */
+	public function process_subscription_payment( $amount, $order ) {
+		$payment_result = $this->get_option( 'result' );
+
+		if ( 'success' === $payment_result ) {
+			$order->payment_complete();
+		} else {
+			$order->update_status( 'failed', __( 'Subscription payment failed. To make a successful payment using Dummy Payments, please review the gateway settings.', 'smepay-for-woocommerce' ) );
+		}
+	}
+
+
+	private function create_smepay_order($order) {
+        $base_order_id = (string) $order->get_id();
+
+        // Generate new order ID with current timestamp
+        $new_order_id = $base_order_id . '-' . time();
+
+        // Check for existing SMEPay order
+        $existing_order_id = $order->get_meta('_smepay_order_id');
+
+        if (!empty($existing_order_id)) {
+            // Extract both base and timestamp
+            [$existing_base_id, $existing_timestamp] = explode('-', $existing_order_id);
+            [$new_base_id, $new_timestamp] = explode('-', $new_order_id);
+
+            // Check for true duplicate (same base and same timestamp)
+            if ($existing_base_id === $new_base_id && $existing_timestamp === $new_timestamp) {
+                return null;
+            }
+        }
+
+        $token = $this->get_access_token();
+        if (!$token) {
+            return null;
+        }
+
+        $order_id = $new_order_id;
+
+        // Save it in order meta
+        $order->update_meta_data('_smepay_order_id', $order_id);
+        $order->save();
+
+        $data = [
+            'client_id' => $this->client_id,
+            'amount' => (string) $order->get_total(),
+            'order_id' => $order_id,
+            'callback_url' => $order->get_checkout_order_received_url(),
+            'customer_details' => [
+                'email' => $order->get_billing_email(),
+                'mobile' => $order->get_billing_phone(),
+                'name'   => $order->get_formatted_billing_full_name()
+            ]
+        ];
+
+        $response = wp_remote_post('https://apps.typof.in/api/external/create-order', [
+            'body' => json_encode($data),
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type'  => 'application/json'
+            ]
+        ]);
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $body = wp_remote_retrieve_body($response);
+        $decoded = json_decode($body, true);
+
+        return $decoded['order_slug'] ?? null;
+    }
+
+    private function get_access_token() {
+        $response = wp_remote_post('https://apps.typof.in/api/external/auth', [
+            'body' => json_encode([
+                'client_id'     => $this->client_id,
+                'client_secret' => $this->client_secret
+            ]),
+            'headers' => [
+                'Content-Type' => 'application/json'
+            ]
+        ]);
+
+        if (is_wp_error($response)) return null;
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        return $body['access_token'] ?? null;
+    }
+
+
+    // Method to send the POST request after payment is done
+    public function send_validate_order_request($order_id) {
+        $order = wc_get_order($order_id);
+
+        $token = $this->get_access_token();
+        if (!$token) {
+            return null;
+        }
+
+        if ($order) {
+            // Extract order details, such as amount (total), client_id, and slug
+            $amount = $order->get_total();
+            $smepay_slug = $order->get_meta('_smepay_slug');
+
+            // You can use a fixed client_id or get it from the plugin settings
+            $client_id = $this->client_id; // Fetch from plugin settings
+
+            // Prepare the data to send in the POST request
+            $data = [
+                'client_id' => $client_id,
+                'amount'    => $amount,
+                'slug'      => $smepay_slug
+            ];
+
+            // Send POST request using wp_remote_post
+            $response = wp_remote_post('https://apps.typof.in/api/external/validate-order', [
+                'method'    => 'POST',
+                'headers'   => [
+                    'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . $token,
+                ],
+                'body'      => json_encode($data),
+                'timeout'   => 15,
+            ]);
+
+            // Check for errors in the response
+            if (is_wp_error($response)) {
+                $error_message = $response->get_error_message();
+            } else {
+                // Log the raw response body for debugging
+                $response_body = wp_remote_retrieve_body($response);
+
+                // Decode the response
+                $decoded_response = json_decode($response_body, true);
+
+                if (isset($decoded_response['status']) && $decoded_response['status'] === true && isset($decoded_response['payment_status']) && $decoded_response['payment_status'] === 'paid') {
+                    // Update order status to "completed" when payment is confirmed
+                    if ($order->get_status() !== 'completed') {
+                        $order->payment_complete();
+                        $order->add_order_note('Payment confirmed via SMEPay.');
+                    }
+                } else {
+                    // Payment was not successful, so mark the order as failed
+                    if ($order->get_status() !== 'failed') {
+                        $order->update_status('failed', 'Payment failed via SMEPay.');
+                        $order->add_order_note('Payment failed via SMEPay.');
+                    }
+                }
+            }
+        } else {
+            // do nothing
+        }
+    }
+
+}
