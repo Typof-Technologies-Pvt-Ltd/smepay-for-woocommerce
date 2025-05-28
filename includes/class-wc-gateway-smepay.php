@@ -71,6 +71,11 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
             return;
         }
 
+        // do not work with card detailes without SSL
+        if( ! is_ssl() ) {
+            return;
+        }
+
         wp_enqueue_script(
             'smepay-checkout',
             'https://typof.co/smepay/checkout.js',
