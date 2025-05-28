@@ -45,13 +45,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	    // Ensure the icon URL is escaped properly
 		$icon_url = esc_url( $this->icon );
 
-		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-		$this->title = sprintf(
-		    '<img src="%s" alt="%s" style="height: 20px; vertical-align: middle; margin-right: 10px;"> %s',
-		    $icon_url,
-		    esc_attr__( 'SMEPay', 'smepay-for-woocommerce' ),
-		    $this->get_option( 'title' )
-		);
+		$this->title = $this->get_option( 'title' );
 
 	    // Retrieve other settings for description, instructions, and credentials
 	    $this->description              = $this->get_option( 'description' );
