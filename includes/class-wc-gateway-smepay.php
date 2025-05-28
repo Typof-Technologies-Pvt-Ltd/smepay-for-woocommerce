@@ -42,8 +42,16 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	    $this->init_form_fields();
 	    $this->init_settings();
 
-	    // Add the icon to the title
-	    $this->title = '<img src="' . esc_url( $this->icon ) . '" alt="SMEPay" style="height: 20px; vertical-align: middle; margin-right: 10px;"> ' . $this->get_option( 'title' );
+	    // Ensure the icon URL is escaped properly
+		$icon_url = esc_url( $this->icon );
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+		$this->title = sprintf(
+		    '<img src="%s" alt="%s" style="height: 20px; vertical-align: middle; margin-right: 10px;"> %s',
+		    $icon_url,
+		    esc_attr__( 'SMEPay', 'smepay-for-woocommerce' ),
+		    $this->get_option( 'title' )
+		);
 
 	    // Retrieve other settings for description, instructions, and credentials
 	    $this->description              = $this->get_option( 'description' );
@@ -63,6 +71,9 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
      * Enqueue frontend scripts
      */
     public function payment_scripts() {
+
+    	// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
         $checkout_layout = $this->smepay_detect_checkout_layout_backend();
 
         if ( ! is_cart() && ! is_checkout() && ! isset( $_GET['pay_for_order'] ) && ! is_order_received_page() ) {
@@ -189,8 +200,8 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
         }
 
         $message = esc_html__( 'Order payment failed. To make a successful payment using Dummy Payments, please review the gateway settings.', 'smepay-for-woocommerce' );
-        $order->update_status( 'failed', $message );
-        throw new Exception( $message );
+		$order->update_status( 'failed', esc_html( $message ) );
+		throw new Exception( esc_html( $message ) );
     }
 
     private function create_smepay_order( $order ) {
