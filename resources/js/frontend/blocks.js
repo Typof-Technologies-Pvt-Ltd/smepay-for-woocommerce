@@ -39,8 +39,6 @@ window.wc.wcBlocksRegistry.registerPaymentMethod(SMEBlock_Gateway);
 
 // Trigger SMEPay widget if smepaySlug exists
 const triggerSMEPayIfSelected = () => {
-    console.log(smepayRedirectUrl);
-
     // If smepaySlug exists, trigger the SMEPay widget
     if (smepaySlug) {
         window.smepayCheckout({

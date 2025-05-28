@@ -1,15 +1,11 @@
 jQuery(function ($) {
   const $form = $('form.checkout');
 
-  console.log('🚀 SMEPay: form.checkout');
-
   $form.on('checkout_place_order_smepay', function (e) {
     e.preventDefault();
 
     const selectedMethod = $('input[name="payment_method"]:checked').val();
     if (selectedMethod !== 'smepay') return true;
-
-    console.log('🚀 SMEPay: Submit triggered');
 
     // Block form while processing
     $form.block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
