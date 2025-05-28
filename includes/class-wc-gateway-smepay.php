@@ -42,9 +42,6 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	    $this->init_form_fields();
 	    $this->init_settings();
 
-	    // Ensure the icon URL is escaped properly
-		$icon_url = esc_url( $this->icon );
-
 		$this->title = $this->get_option( 'title' );
 
 	    // Retrieve other settings for description, instructions, and credentials
