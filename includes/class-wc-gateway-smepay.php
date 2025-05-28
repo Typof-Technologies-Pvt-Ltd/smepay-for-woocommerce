@@ -27,29 +27,38 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
     protected $client_secret;
 
     /**
-     * Constructor
-     */
-    public function __construct() {
-        $this->icon               = apply_filters( 'woocommerce_smepay_gateway_icon', '' );
-        $this->has_fields         = false;
-        $this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
-        $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
+	 * Constructor
+	 */
+	public function __construct() {
+	    // Set the gateway icon with a filterable URL (allowing for dynamic modifications)
+	    $this->icon = apply_filters( 'woocommerce_smepay_gateway_icon', SMEPAY_WC_URL . 'resources/images/smepay-icon.webp' );
 
-        $this->init_form_fields();
-        $this->init_settings();
+	    // Basic configuration settings for the payment gateway
+	    $this->has_fields         = false;
+	    $this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
+	    $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
 
-        $this->title                    = $this->get_option( 'title' );
-        $this->description              = $this->get_option( 'description' );
-        $this->instructions             = $this->get_option( 'instructions', $this->description );
-        $this->hide_for_non_admin_users = $this->get_option( 'hide_for_non_admin_users' );
-        $this->client_id                = $this->get_option( 'client_id' );
-        $this->client_secret            = $this->get_option( 'client_secret' );
+	    // Initialize form fields and settings
+	    $this->init_form_fields();
+	    $this->init_settings();
 
-        add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
-        add_action( 'woocommerce_scheduled_subscription_payment_dummy', [ $this, 'process_subscription_payment' ], 10, 2 );
-        add_action( 'woocommerce_thankyou', [ $this, 'send_validate_order_request' ], 10, 1 );
-        add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
-    }
+	    // Add the icon to the title
+	    $this->title = '<img src="' . esc_url( $this->icon ) . '" alt="SMEPay" style="height: 20px; vertical-align: middle; margin-right: 10px;"> ' . $this->get_option( 'title' );
+
+	    // Retrieve other settings for description, instructions, and credentials
+	    $this->description              = $this->get_option( 'description' );
+	    $this->instructions             = $this->get_option( 'instructions', $this->description );
+	    $this->hide_for_non_admin_users = $this->get_option( 'hide_for_non_admin_users' );
+	    $this->client_id                = $this->get_option( 'client_id' );
+	    $this->client_secret            = $this->get_option( 'client_secret' );
+
+	    // Add necessary actions for various hooks
+	    add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
+	    add_action( 'woocommerce_scheduled_subscription_payment_smepay', [ $this, 'process_subscription_payment' ], 10, 2 );
+	    add_action( 'woocommerce_thankyou', [ $this, 'send_validate_order_request' ], 10, 1 );
+	    add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
+	}
+
 
     /**
      * Enqueue frontend scripts
@@ -111,14 +120,14 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
                 'title'       => __( 'Title', 'smepay-for-woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'smepay-for-woocommerce' ),
-                'default'     => _x( 'Dummy Payment', 'Dummy payment method', 'smepay-for-woocommerce' ),
+                'default'     => _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' ),
                 'desc_tip'    => true,
             ],
             'description' => [
                 'title'       => __( 'Description', 'smepay-for-woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'Payment method description that the customer will see on your checkout.', 'smepay-for-woocommerce' ),
-                'default'     => __( 'The goods are yours. No money needed.', 'smepay-for-woocommerce' ),
+                'default'     => __( 'The goods are yours. Pay using UPI Payment via SMEPay.', 'smepay-for-woocommerce' ),
                 'desc_tip'    => true,
             ],
             'client_id' => [
@@ -132,7 +141,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
             'result' => [
                 'title'    => __( 'Payment result', 'smepay-for-woocommerce' ),
                 'desc'     => __( 'Determine if order payments are successful when using this gateway.', 'smepay-for-woocommerce' ),
-                'id'       => 'woo_dummy_payment_result',
+                'id'       => 'woo_smepay_payment_result',
                 'type'     => 'select',
                 'options'  => [
                     'success' => __( 'Success', 'smepay-for-woocommerce' ),
