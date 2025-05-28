@@ -11,8 +11,8 @@
  * Text Domain: smepay-for-woocommerce
  * Domain Path: /languages/
  *
- * Requires at least: 4.2
- * Tested up to: 6.6
+ * Requires at least: 4.7
+ * Tested up to: 6.8
  *
  * Copyright: © Typof.
  * License: GNU General Public License v3.0

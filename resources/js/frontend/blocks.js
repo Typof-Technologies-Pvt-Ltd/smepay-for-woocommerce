@@ -37,31 +37,33 @@ const SMEBlock_Gateway = {
 
 window.wc.wcBlocksRegistry.registerPaymentMethod(SMEBlock_Gateway);
 
-// ✅ Trigger SMEPay widget only if SMEPay is selected
+// Trigger SMEPay widget if smepaySlug exists
 const triggerSMEPayIfSelected = () => {
-    console.log(smepay_data.redirect_url);
-    const selected = document.querySelector('input[name="payment-method"]:checked');
-    if (selected && selected.value === 'smepay' && smepaySlug) {
+    console.log(smepayRedirectUrl);
+
+    // If smepaySlug exists, trigger the SMEPay widget
+    if (smepaySlug) {
         window.smepayCheckout({
             slug: smepaySlug,
             onSuccess: function () {
-                // You can make this dynamic if needed
-                // http://localhost:8888/wc-proj/checkout/order-pay/910/?pay_for_order=true&key=wc_order_jO84HwAeJJDeD&redirect_url=http://localhost:8888/wc-proj/checkout/order-received/910/?key=wc_order_jO84HwAeJJDeD&smepay_slug=XFGMSDfSU7ka
+                // Redirect after successful payment
                 window.location.href = smepayRedirectUrl + `&smepay_slug=${smepaySlug}`;
             },
             onFailure: function () {
                 console.warn('❌ SMEPay widget closed or failed.');
             }
         });
+    } else {
+        console.log('SMEPay is not available, widget will not trigger.');
     }
 };
 
-// 🔁 Run once on load in case SMEPay is already selected
+// Run once on load in case SMEPay is available
 window.addEventListener('load', () => {
     setTimeout(triggerSMEPayIfSelected, 500);
 });
 
-// 🎧 Also bind to radio change event
+// Bind to radio button change event to handle any user interaction
 document.addEventListener('change', (e) => {
     if (e.target && e.target.matches('input[name="payment-method"][value="smepay"]')) {
         triggerSMEPayIfSelected();
