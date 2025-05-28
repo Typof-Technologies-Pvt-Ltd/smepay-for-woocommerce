@@ -54,7 +54,6 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 
 	    // Add necessary actions for various hooks
 	    add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
-	    add_action( 'woocommerce_scheduled_subscription_payment_smepay', [ $this, 'process_subscription_payment' ], 10, 2 );
 	    add_action( 'woocommerce_thankyou', [ $this, 'send_validate_order_request' ], 10, 1 );
 	    add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
 	}
@@ -192,17 +191,6 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
         $message = esc_html__( 'Order payment failed. To make a successful payment using Dummy Payments, please review the gateway settings.', 'smepay-for-woocommerce' );
         $order->update_status( 'failed', $message );
         throw new Exception( $message );
-    }
-
-    /**
-     * Process subscription payments
-     */
-    public function process_subscription_payment( $amount, $order ) {
-        if ( 'success' === $this->get_option( 'result' ) ) {
-            $order->payment_complete();
-        } else {
-            $order->update_status( 'failed', __( 'Subscription payment failed.', 'smepay-for-woocommerce' ) );
-        }
     }
 
     private function create_smepay_order( $order ) {
