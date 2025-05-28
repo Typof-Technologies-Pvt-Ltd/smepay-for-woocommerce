@@ -31,7 +31,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	 */
 	public function __construct() {
 	    // Set the gateway icon with a filterable URL (allowing for dynamic modifications)
-	    $this->icon = apply_filters( 'woocommerce_smepay_gateway_icon', SMEPAY_WC_URL . 'resources/images/smepay-icon.webp' );
+	    $this->icon = apply_filters( 'woocommerce_smepay_gateway_icon', 'https://typof.co/smepay/smepay.svg' );
 
 	    // Basic configuration settings for the payment gateway
 	    $this->has_fields         = false;
