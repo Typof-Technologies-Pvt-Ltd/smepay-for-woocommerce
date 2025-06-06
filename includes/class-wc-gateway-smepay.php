@@ -57,6 +57,25 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	    add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
 	}
 
+    /**
+     * Determine whether the gateway is available at checkout.
+     *
+     * @return bool
+     */
+    public function is_available() {
+        // Enforce SSL for payment processing
+        if ( ! is_ssl() ) {
+            return false;
+        }
+
+        // Optionally hide from non-admin users
+        if ( 'yes' === $this->hide_for_non_admin_users && ! current_user_can( 'manage_options' ) ) {
+            return false;
+        }
+
+        // Check if the gateway is enabled and credentials are provided
+        return 'yes' === $this->enabled && ! empty( $this->client_id ) && ! empty( $this->client_secret );
+    }
 
     /**
      * Enqueue frontend scripts

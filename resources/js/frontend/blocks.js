@@ -1,6 +1,6 @@
 const smepaylabelText = 'SMEPay for WooCommerce';
 const smepaylogo = 'https://typof.co/smepay/smepay.svg';
-const { createElement: el, Fragment } = window.wp.element;
+const { createElement: smepayEl, Fragment } = window.wp.element;
 
 // Get slug from URL
 const urlParams = new URLSearchParams(window.location.search);
@@ -13,9 +13,9 @@ const smepayContent = () => 'Pay securely using SMEPay UPI.';
 // Register SMEPay payment method
 const SMEBlock_Gateway = {
     name: 'smepay',
-    label: el(Fragment, null,
+    label: smepayEl(Fragment, null,
         smepaylabelText,
-        el('img', {
+        smepayEl('img', {
             src: smepaylogo,
             alt: 'SMEPay Logo',
             style: {
@@ -26,8 +26,8 @@ const SMEBlock_Gateway = {
             }
         })
     ),
-    content: el('div', null, smepayContent()),
-    edit: el('div', null, smepayContent()),
+    content: smepayEl('div', null, smepayContent()),
+    edit: smepayEl('div', null, smepayContent()),
     canMakePayment: () => true,
     ariaLabel: smepaylabelText,
     supports: {
@@ -37,8 +37,15 @@ const SMEBlock_Gateway = {
 
 window.wc.wcBlocksRegistry.registerPaymentMethod(SMEBlock_Gateway);
 
+const orderPaid = window.wcSmepayData?.orderPaid || false;
+
 // Trigger SMEPay widget if smepaySlug exists
 const triggerSMEPayIfSelected = () => {
+    if (orderPaid) {
+        console.log('Order is already paid. SMEPay widget will not be triggered.');
+        return;
+    }
+    
     // If smepaySlug exists, trigger the SMEPay widget
     if (smepaySlug) {
         window.smepayCheckout({

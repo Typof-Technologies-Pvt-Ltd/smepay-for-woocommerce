@@ -37,6 +37,10 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
      * @return boolean
      */
     public function is_active() {
+        // Ensure SSL is being used
+        if ( ! is_ssl() ) {
+            return false;
+        }
         return $this->gateway->is_available();
     }
 
@@ -46,13 +50,13 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
      * @return array
      */
     public function get_payment_method_script_handles() {
-        // Prevent loading block JS if the order is already paid (on thank you page)
+        // Check if on order received (thank you) page and order is paid
+        $is_paid = false;
         if ( is_order_received_page() ) {
             $order_id = absint( get_query_var( 'order-received' ) );
             $order    = wc_get_order( $order_id );
-
             if ( $order instanceof WC_Order && $order->is_paid() ) {
-                return []; // Don't load SMEPay block scripts if payment is already completed
+                $is_paid = true;
             }
         }
         
@@ -83,6 +87,15 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
                 SMEPAY_WC_PATH . 'languages/'
             );
         }
+
+        // Localize orderPaid boolean for JS
+        wp_localize_script(
+            'wc-smepay-payments-blocks',
+            'wcSmepayData',
+            [
+                'orderPaid' => $is_paid,
+            ]
+        );
 
         return [ 'wc-smepay-payments-blocks' ];
     }
