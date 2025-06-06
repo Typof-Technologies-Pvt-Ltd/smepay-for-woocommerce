@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: SMEPay for WooCommerce
- * Plugin URI:  https://smepay.io/
+ * Plugin URI:  https://smepay.io
  * Description: Accept UPI payments via SMEPay with QR code widget on your WooCommerce website.
  * Version:     1.0.0
  * Author:      SMEPay
- * Author URI:  https://smepay.io/
+ * Author URI:  https://profiles.wordpress.org/smepay
  * Text Domain: smepay-for-woocommerce
  * Domain Path: /languages/
  * Requires Plugins: woocommerce
