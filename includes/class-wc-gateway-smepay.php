@@ -195,11 +195,22 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
             ];
         }
 
-        $message = esc_html__( 'Order payment failed. To make a successful payment using Dummy Payments, please review the gateway settings.', 'smepay-for-woocommerce' );
-		$order->update_status( 'failed', esc_html( $message ) );
-		throw new Exception( esc_html( $message ) );
+        if ( 'success' !== $payment_result ) {
+            wc_add_notice( __( 'Order payment failed. Please review the gateway settings.', 'smepay-for-woocommerce' ), 'error' );
+            $order->update_status( 'failed', __( 'Order payment failed.', 'smepay-for-woocommerce' ) );
+            return [
+                'result'   => 'failure',
+                'redirect' => '',
+            ];
+        }
     }
 
+    /**
+     * Create a SMEPay order and return the order slug.
+     *
+     * @param WC_Order $order WooCommerce order object.
+     * @return string|null Order slug or null on failure.
+     */
     private function create_smepay_order( $order ) {
         $base_order_id = (string) $order->get_id();
         $new_order_id  = $base_order_id . '-' . time();
