@@ -114,7 +114,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
             'enabled' => [
                 'title'   => __( 'Enable/Disable', 'smepay-for-woocommerce' ),
                 'type'    => 'checkbox',
-                'label'   => __( 'Enable Dummy Payments', 'smepay-for-woocommerce' ),
+                'label'   => __( 'Enable SMEPay Payments', 'smepay-for-woocommerce' ),
                 'default' => 'yes',
             ],
             'hide_for_non_admin_users' => [

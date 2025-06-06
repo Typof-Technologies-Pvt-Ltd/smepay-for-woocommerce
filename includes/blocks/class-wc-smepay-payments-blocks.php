@@ -46,6 +46,16 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
      * @return array
      */
     public function get_payment_method_script_handles() {
+        // Prevent loading block JS if the order is already paid (on thank you page)
+        if ( is_order_received_page() ) {
+            $order_id = absint( get_query_var( 'order-received' ) );
+            $order    = wc_get_order( $order_id );
+
+            if ( $order instanceof WC_Order && $order->is_paid() ) {
+                return []; // Don't load SMEPay block scripts if payment is already completed
+            }
+        }
+        
         $script_path = '/resources/js/frontend/blocks.js';
         $script_url  = SMEPAY_WC_URL . $script_path;
 
