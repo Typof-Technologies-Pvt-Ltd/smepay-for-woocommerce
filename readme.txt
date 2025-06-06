@@ -29,6 +29,13 @@ This plugin allows WooCommerce stores to accept payments through **SMEPay** usin
 3. Go to WooCommerce > Settings > Payments to enable and configure SMEPay as a payment method.
 4. Enter your **SMEPay API credentials** (provided when you sign up for SMEPay) in the settings to enable payment processing.
 
+== Requirements ==
+
+- **SSL Certificate Required**: For secure payment processing, **SSL** (Secure Socket Layer) is mandatory. Your website must have an SSL certificate installed and configured to use the SMEPay payment gateway.
+  - You can verify if your website has SSL by checking for the green padlock icon in your browser's address bar.
+  - If you don't have SSL, consider installing one from your hosting provider.
+
+
 == Frequently Asked Questions ==
 
 = What is SMEPay? =
