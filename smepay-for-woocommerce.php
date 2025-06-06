@@ -50,6 +50,9 @@ class Smepay_For_WooCommerce {
 
         // Registers WooCommerce Blocks integration.
         add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'woocommerce_gateway_smepay_woocommerce_block_support' ) );
+
+        // Check for SSL before initializing the plugin
+        add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
     }
 
     /**
@@ -85,6 +88,17 @@ class Smepay_For_WooCommerce {
         // Make the SMEPay gateway available to WooCommerce.
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
             require_once SMEPAY_WC_PATH . 'includes/class-wc-gateway-smepay.php';
+        }
+    }
+
+    /**
+     * Show admin notice if SSL is not enabled.
+     */
+    public static function check_ssl_requirement() {
+        if ( ! is_ssl() ) {
+            echo '<div class="notice notice-error is-dismissible">';
+            echo '<p><strong>SMEPay for WooCommerce:</strong> SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.</p>';
+            echo '</div>';
         }
     }
 
