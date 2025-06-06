@@ -1,9 +1,9 @@
 === SMEPay for WooCommerce ===
 Contributors: smepay, upnrunn, kishores
 Donate link: https://smepay.io/
-Tags: UPI, WooCommerce, Payment Gateway, SMEPay, QR Code, UPI Payments, Instant Payment
+Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
-Tested up to: 6.8.1
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.0
 Requires Plugins: woocommerce

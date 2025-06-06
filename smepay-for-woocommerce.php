@@ -11,7 +11,7 @@
  * Requires Plugins: woocommerce
  *
  * Requires at least: 4.7
- * Tested up to:      6.8.1
+ * Tested up to:      6.8
  *
  * Copyright:  © Typof.
  * License:    GNU General Public License v3.0
