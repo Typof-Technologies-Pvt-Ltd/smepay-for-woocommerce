@@ -97,7 +97,9 @@ class Smepay_For_WooCommerce {
     public static function check_ssl_requirement() {
         if ( ! is_ssl() ) {
             echo '<div class="notice notice-error is-dismissible">';
-            echo '<p><strong>SMEPay for WooCommerce:</strong> SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.</p>';
+            echo '<p><strong>' . esc_html__( 'SMEPay for WooCommerce:', 'smepay-for-woocommerce' ) . '</strong> ';
+            echo esc_html__( 'SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.', 'smepay-for-woocommerce' );
+            echo '</p>';
             echo '</div>';
         }
     }
