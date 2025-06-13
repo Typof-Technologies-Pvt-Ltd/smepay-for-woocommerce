@@ -35,7 +35,6 @@ This plugin allows WooCommerce stores to accept payments through **SMEPay** usin
   - You can verify if your website has SSL by checking for the green padlock icon in your browser's address bar.
   - If you don't have SSL, consider installing one from your hosting provider.
 
-
 == Frequently Asked Questions ==
 
 = What is SMEPay? =
@@ -55,6 +54,33 @@ SMEPay supports all UPI-enabled apps, including Google Pay, PhonePe, Paytm, and 
 
 = Can I use SMEPay for recurring payments? =
 Currently, SMEPay supports one-time payments via UPI. For recurring payments, you would need to explore other payment gateways.
+
+== External Services ==
+
+This plugin connects to the **SMEPay** platform to process UPI payments.
+
+### What external services are used and why:
+
+The plugin uses the following SMEPay API endpoints to enable UPI payment functionality:
+- **Create Order**: `https://apps.typof.in/api/external/create-order`  
+  Used to create a unique UPI payment request based on the WooCommerce order.
+- **Validate Order**: `https://apps.typof.in/api/external/validate-order`  
+  Used to confirm payment status after the customer completes payment.
+- **Auth**: `https://apps.typof.in/api/external/auth`  
+  Used to authenticate your WooCommerce store with SMEPay using API credentials.
+- **Frontend Script**: `https://typof.co/smepay/checkout.js`  
+  A secure JavaScript widget that shows the payment QR and handles frontend interactions.
+
+### What data is sent:
+- During checkout, basic order details like order ID, total amount, and currency are sent to SMEPay.
+- The plugin uses your SMEPay **client ID and client secret** to authenticate.
+- No sensitive customer information (such as name, email, or phone) is transmitted unless required by your merchant configuration.
+
+### Service Provider:
+**SMEPay by Typof Technologies**
+
+- Terms of Service: https://smepay.io/tnc
+- Privacy Policy: https://smepay.io/privacy-policy
 
 == Changelog ==
 
