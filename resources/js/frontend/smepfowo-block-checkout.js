@@ -52,7 +52,6 @@ const triggerSMEPayIfSelected = () => {
     }
 
     if (smepaySlug) {
-        console.log(__('Triggering SMEPay widget with slug:', 'smepay-for-woocommerce'), smepaySlug);
         window.smepayCheckout({
             slug: smepaySlug,
             onSuccess: function () {

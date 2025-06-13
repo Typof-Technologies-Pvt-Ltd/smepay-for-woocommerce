@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-06-13T15:31:07+00:00\n"
+"POT-Creation-Date: 2025-06-13T15:48:04+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: smepay-for-woocommerce\n"
@@ -130,14 +130,10 @@ msgstr ""
 msgid "Order is already paid. SMEPay widget will not be triggered."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:55
-msgid "Triggering SMEPay widget with slug:"
-msgstr ""
-
-#: resources/js/frontend/smepfowo-block-checkout.js:63
+#: resources/js/frontend/smepfowo-block-checkout.js:62
 msgid "SMEPay widget closed or failed."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:67
+#: resources/js/frontend/smepfowo-block-checkout.js:66
 msgid "SMEPay slug missing. Widget will not trigger."
 msgstr ""
