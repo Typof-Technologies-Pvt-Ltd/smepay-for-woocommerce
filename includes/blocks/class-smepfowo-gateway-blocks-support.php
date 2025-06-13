@@ -6,12 +6,12 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
  *
  * @since 1.0.0
  */
-final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
+final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
 
     /**
      * The gateway instance.
      *
-     * @var WC_Gateway_SMEPay
+     * @var WC_Gateway_SMEPFOWO
      */
     private $gateway;
 
@@ -20,13 +20,13 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
      *
      * @var string
      */
-    protected $name = 'smepay';
+    protected $name = 'smepfowo';
 
     /**
      * Initializes the payment method type.
      */
     public function initialize() {
-        $this->settings = get_option( 'woocommerce_smepay_settings', [] );
+        $this->settings = get_option( 'woocommerce_smepfowo_settings', [] );
         $gateways       = WC()->payment_gateways->payment_gateways();
         $this->gateway  = $gateways[ $this->name ];
     }
@@ -60,11 +60,11 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
             }
         }
         
-        $script_path = '/resources/js/frontend/blocks.js';
-        $script_url  = SMEPAY_WC_URL . $script_path;
+        $script_path = '/resources/js/frontend/smepfowo-block-checkout.js';
+        $script_url  = SMEPFOWO_URL . $script_path;
 
         wp_register_script(
-            'wc-smepay-payments-blocks',
+            'smepfowo-payments-blocks',
             $script_url,
             [
                 'wc-blocks-registry', // Ensure wc-blocks-registry is loaded.
@@ -74,30 +74,32 @@ final class WC_Gateway_SMEPay_Blocks_Support extends AbstractPaymentMethodType {
                 'wp-html-entities',
                 'wp-i18n',
             ],
-            SMEPAY_WC_VERSION, // Replace with your desired version.
+            SMEPFOWO_VERSION, // Replace with your desired version.
             true
         );
 
-        wp_script_add_data( 'wc-smepay-payments-blocks', 'type', 'module' ); // Set as ES Module.
+        wp_script_add_data( 'smepfowo-payments-blocks', 'type', 'module' ); // Set as ES Module.
 
         if ( function_exists( 'wp_set_script_translations' ) ) {
             wp_set_script_translations(
-                'wc-smepay-payments-blocks',
+                'smepfowo-payments-blocks',
                 'smepay-for-woocommerce',
-                SMEPAY_WC_PATH . 'languages/'
+                SMEPFOWO_PATH . 'languages/'
             );
         }
 
-        // Localize orderPaid boolean for JS
+        // Localize orderPaid boolean and image URL for JS
         wp_localize_script(
-            'wc-smepay-payments-blocks',
-            'wcSmepayData',
+            'smepfowo-payments-blocks',
+            'smepfowoCheckoutData',
             [
                 'orderPaid' => $is_paid,
+                'imgUrl'    => SMEPFOWO_URL . 'resources/img/smepay.svg',
             ]
         );
 
-        return [ 'wc-smepay-payments-blocks' ];
+
+        return [ 'smepfowo-payments-blocks' ];
     }
 
     /**

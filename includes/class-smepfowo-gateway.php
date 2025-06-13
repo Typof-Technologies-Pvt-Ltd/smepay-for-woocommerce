@@ -1,6 +1,6 @@
 <?php
 /**
- * WC_Gateway_SMEPay class
+ * SMEPFOWO_Gateway class
  *
  * @author    SMEPay <support@smepay.io>
  * @package   WooCommerce SMEPay Payments Gateway
@@ -14,14 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * SMEPay Gateway Class
  */
-class WC_Gateway_SMEPay extends WC_Payment_Gateway {
+class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
-    use SMEPay_Utils;
+    use SMEPFOWO_Utils;
 
     protected $instructions;
     protected $hide_for_non_admin_users;
 
-    public $id = 'smepay';
+    public $id = 'smepfowo';
 
     protected $client_id;
     protected $client_secret;
@@ -31,7 +31,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
 	 */
 	public function __construct() {
 	    // Set the gateway icon with a filterable URL (allowing for dynamic modifications)
-	    $this->icon = apply_filters( 'woocommerce_smepay_gateway_icon', 'https://typof.co/smepay/smepay.svg' );
+	    $this->icon = apply_filters( 'smepayfowo_gateway_icon', SMEPFOWO_URL . 'resources/img/smepay.svg' );
 
 	    // Basic configuration settings for the payment gateway
 	    $this->has_fields         = false;
@@ -96,10 +96,10 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
         }
 
         wp_enqueue_script(
-            'smepay-checkout',
+            'smepfowo-checkout',
             'https://typof.co/smepay/checkout.js',
             [],
-            SMEPAY_WC_VERSION,
+            SMEPFOWO_VERSION,
             true
         );
 
@@ -107,7 +107,7 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
             return;
         }
 
-        wp_localize_script( 'smepay-handler', 'smepay_data', [
+        wp_localize_script( 'smepfowo-handler', 'smepay_data', [
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce'    => wp_create_nonce( 'smepay_nonce' ),
         ] );
@@ -117,10 +117,10 @@ class WC_Gateway_SMEPay extends WC_Payment_Gateway {
         }
 
         wp_enqueue_script(
-            'smepay-handler',
-            SMEPAY_WC_URL . 'resources/js/frontend/smepay-checkout-handler.js',
+            'smepfowo-handler',
+            SMEPFOWO_URL . 'resources/js/frontend/smepfowo-classic-checkout.js',
             [ 'jquery' ],
-            SMEPAY_WC_VERSION,
+            SMEPFOWO_VERSION,
             true
         );
     }

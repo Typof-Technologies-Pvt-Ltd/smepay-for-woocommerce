@@ -22,20 +22,23 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define plugin version constant.
-define( 'SMEPAY_WC_VERSION', '1.0.0' );
+define( 'SMEPFOWO_VERSION', '1.0.0' );
 
 // Define absolute server path to the plugin directory.
-define( 'SMEPAY_WC_PATH', plugin_dir_path( __FILE__ ) );
+define( 'SMEPFOWO_PATH', plugin_dir_path( __FILE__ ) );
 
 // Define URL to the plugin directory (for loading assets).
-define( 'SMEPAY_WC_URL', plugin_dir_url( __FILE__ ) );
+define( 'SMEPFOWO_URL', plugin_dir_url( __FILE__ ) );
+
+// Plugin base name used for activation hooks and localization
+define( 'SMEPFOWO_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 
 /**
  * Main plugin class for SMEPay WooCommerce integration.
  *
- * @package Smepay_For_WooCommerce
+ * @package SMEPay_For_WooCommerce
  */
-class Smepay_For_WooCommerce {
+class SMEPay_For_WooCommerce {
 
     /**
      * Plugin bootstrapping.
@@ -43,7 +46,7 @@ class Smepay_For_WooCommerce {
     public static function init() {
 
         // SMEPay gateway class.
-        add_action( 'plugins_loaded', array( __CLASS__, 'includes' ), 0 );
+        add_action( 'plugins_loaded', array( __CLASS__, 'includes' ), 11 );
 
         // Make the SMEPay Payments gateway available to WC.
         add_filter( 'woocommerce_payment_gateways', array( __CLASS__, 'add_gateway' ) );
@@ -53,6 +56,9 @@ class Smepay_For_WooCommerce {
 
         // Check for SSL before initializing the plugin
         add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
+
+        // Load text domain.
+        add_action( 'plugins_loaded', array( __CLASS__, 'load_textdomain' ) );
     }
 
     /**
@@ -63,7 +69,7 @@ class Smepay_For_WooCommerce {
      */
     public static function add_gateway( $gateways ) {
 
-        $options = get_option( 'woocommerce_smepay_settings', array() );
+        $options = get_option( 'woocommerce_smepfowo_settings', array() );
 
         if ( isset( $options['hide_for_non_admin_users'] ) ) {
             $hide_for_non_admin_users = $options['hide_for_non_admin_users'];
@@ -72,7 +78,7 @@ class Smepay_For_WooCommerce {
         }
 
         if ( ( 'yes' === $hide_for_non_admin_users && current_user_can( 'manage_options' ) ) || 'no' === $hide_for_non_admin_users ) {
-            $gateways[] = 'WC_Gateway_SMEPay';
+            $gateways[] = 'SMEPFOWO_Gateway';
         }
 
         return $gateways;
@@ -83,11 +89,11 @@ class Smepay_For_WooCommerce {
      */
     public static function includes() {
 
-        require_once SMEPAY_WC_PATH . 'includes/class-smepay-utils.php';
+        require_once SMEPFOWO_PATH . 'includes/class-smepfowo-utils.php';
 
         // Make the SMEPay gateway available to WooCommerce.
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
-            require_once SMEPAY_WC_PATH . 'includes/class-wc-gateway-smepay.php';
+            require_once SMEPFOWO_PATH . 'includes/class-smepfowo-gateway.php';
         }
     }
 
@@ -97,9 +103,11 @@ class Smepay_For_WooCommerce {
     public static function check_ssl_requirement() {
         if ( ! is_ssl() ) {
             echo '<div class="notice notice-error is-dismissible">';
-            echo '<p><strong>' . esc_html__( 'SMEPay for WooCommerce:', 'smepay-for-woocommerce' ) . '</strong> ';
-            echo esc_html__( 'SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.', 'smepay-for-woocommerce' );
-            echo '</p>';
+            printf(
+                '<p><strong>%s</strong> %s</p>',
+                esc_html__( 'SMEPay for WooCommerce:', 'smepay-for-woocommerce' ),
+                esc_html__( 'SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.', 'smepay-for-woocommerce' )
+            );
             echo '</div>';
         }
     }
@@ -123,25 +131,58 @@ class Smepay_For_WooCommerce {
     }
 
     /**
-     * Registers WooCommerce Blocks integration.
+     * Load plugin textdomain for translations.
+     *
+     * This function makes the plugin ready for localization by loading the `.mo` files
+     * from the `/languages` directory. It should be called during the plugin's initialization phase.
+     *
+     * @return void
+     */
+    public static function load_textdomain() {
+        load_plugin_textdomain(
+            'smepay-for-woocommerce',
+            false,
+            dirname( SMEPFOWO_PLUGIN_BASENAME ) . '/languages'
+        );
+    }
+
+
+    /**
+     * Registers WooCommerce Blocks integration for SMEPay payment gateway.
+     *
+     * This method ensures that the SMEPay gateway is available as a payment option
+     * in the WooCommerce Block-based checkout. It checks if the required
+     * `AbstractPaymentMethodType` class exists before registering the integration.
+     *
+     * @return void
      */
     public static function woocommerce_gateway_smepay_woocommerce_block_support() {
 
         if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
 
-            require_once SMEPAY_WC_PATH . 'includes/blocks/class-wc-smepay-payments-blocks.php';
+            require_once SMEPFOWO_PATH . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
 
+            // Register the gateway integration with the WooCommerce Blocks system.
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
-                function( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
-                    $payment_method_registry->register( new WC_Gateway_SMEPay_Blocks_Support() );
+                /**
+                 * Registers SMEPay Gateway with the WooCommerce Blocks Payment Method Registry.
+                 *
+                 * @param Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry The payment method registry instance.
+                 *
+                 * @return void
+                 */
+                function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
+                    $payment_method_registry->register( new SMEPFOWO_Gateway_Blocks_Support() );
                 }
             );
         }
     }
+
 }
 
 // Initialize plugin only if WooCommerce is active.
-if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true ) ) {
-    Smepay_For_WooCommerce::init();
+if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) || 
+     ( is_multisite() && in_array( 'woocommerce/woocommerce.php', get_site_option( 'active_sitewide_plugins', array() ) ) ) ) {
+    SMEPay_For_WooCommerce::init();
 }

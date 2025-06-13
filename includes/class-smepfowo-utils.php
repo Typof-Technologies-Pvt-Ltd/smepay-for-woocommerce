@@ -1,6 +1,6 @@
 <?php
 
-trait SMEPay_Utils {
+trait SMEPFOWO_Utils {
     /**
      * Detects the checkout layout and theme type.
      *
