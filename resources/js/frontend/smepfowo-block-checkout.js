@@ -1,23 +1,27 @@
-const smepfowoLabelText = 'SMEPay for WooCommerce';
-const smepfowoLogo = window.smepfowoCheckoutData?.imgUrl || '';
+// Destructure required WordPress packages
 const { createElement: smepayEl, Fragment } = window.wp.element;
+const { __ } = window.wp.i18n;
 
-// Get slug from URL
+// Get localized logo from PHP
+const smepfowoLogo = window.smepfowoCheckoutData?.imgUrl || '';
+
+// Translatable label and description
+const smepfowoLabelText = __('SMEPay for WooCommerce', 'smepay-for-woocommerce');
+const smepayContent = () => __('Pay securely using SMEPay UPI.', 'smepay-for-woocommerce');
+
+// Get URL parameters
 const urlParams = new URLSearchParams(window.location.search);
 const smepaySlug = urlParams.get('smepay_slug');
 const smepayRedirectUrl = urlParams.get('redirect_url');
 
-// Your payment description
-const smepayContent = () => 'Pay securely using SMEPay UPI.';
-
-// Register SMEPay payment method
+// Register SMEPay payment method for block checkout
 const smepfowoBlockGateway = {
     name: 'smepfowo',
     label: smepayEl(Fragment, null,
         smepfowoLabelText,
         smepayEl('img', {
             src: smepfowoLogo,
-            alt: 'SMEPay Logo',
+            alt: __('SMEPay Logo', 'smepay-for-woocommerce'),
             style: {
                 height: '20px',
                 marginLeft: '8px',
@@ -37,33 +41,34 @@ const smepfowoBlockGateway = {
 
 window.wc.wcBlocksRegistry.registerPaymentMethod(smepfowoBlockGateway);
 
+// Determine if order was already paid
 const orderPaid = window.smepfowoCheckoutData?.orderPaid || false;
 
-// Trigger SMEPay widget if smepaySlug exists
+// Trigger SMEPay widget if needed
 const triggerSMEPayIfSelected = () => {
     if (orderPaid) {
-        console.log('Order is already paid. SMEPay widget will not be triggered.');
+        console.log(__('Order is already paid. SMEPay widget will not be triggered.', 'smepay-for-woocommerce'));
         return;
     }
-    
+
     if (smepaySlug) {
-        console.log('Triggering SMEPay widget with slug:', smepaySlug);
+        console.log(__('Triggering SMEPay widget with slug:', 'smepay-for-woocommerce'), smepaySlug);
         window.smepayCheckout({
             slug: smepaySlug,
             onSuccess: function () {
-                // Redirect after successful payment
+                // Redirect after success
                 window.location.href = smepayRedirectUrl + `&smepay_slug=${smepaySlug}`;
             },
             onFailure: function () {
-                console.warn('SMEPay widget closed or failed.');
+                console.warn(__('SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
             }
         });
     } else {
-        console.log('SMEPay slug missing. Widget will not trigger.');
+        console.log(__('SMEPay slug missing. Widget will not trigger.', 'smepay-for-woocommerce'));
     }
 };
 
-// Run once on load in case SMEPay is available
+// Run once on load if SMEPay is selected
 window.addEventListener('load', () => {
     const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
     if (selectedPayment?.value === 'smepfowo') {
@@ -71,7 +76,7 @@ window.addEventListener('load', () => {
     }
 });
 
-// Bind to radio button change event to handle user interaction
+// Watch for user selecting SMEPay payment method
 document.addEventListener('change', (e) => {
     if (e.target && e.target.matches('input[name="payment_method"][value="smepfowo"]')) {
         triggerSMEPayIfSelected();
