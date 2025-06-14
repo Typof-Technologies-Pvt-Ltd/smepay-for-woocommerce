@@ -85,6 +85,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return;
         }
 
+        // Load the remote SMEPay widget
         wp_enqueue_script(
             'smepfowo-checkout',
             'https://typof.co/smepay/checkout.js',
@@ -93,10 +94,33 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             true
         );
 
+        // Do not proceed if plugin is disabled or missing credentials
         if ( 'no' === $this->enabled || empty( $this->client_id ) || empty( $this->client_secret ) ) {
             return;
         }
 
+        // Skip if using block checkout layout (handled separately)
+        if ( 'block' === $checkout_layout['layout'] ) {
+            return;
+        }
+
+        // Register the frontend JS handler
+        wp_register_script(
+            'smepfowo-handler',
+            SMEPFOWO_URL . 'resources/js/frontend/smepfowo-classic-checkout.js',
+            [ 'jquery', 'wp-i18n' ],
+            SMEPFOWO_VERSION,
+            true
+        );
+
+        // Set up translations for JavaScript strings
+        wp_set_script_translations(
+            'smepfowo-handler',
+            'smepay-for-woocommerce',
+            plugin_dir_path( SMEPFOWO_PATH ) . 'languages'
+        );
+
+        // Localize dynamic data
         wp_localize_script(
             'smepfowo-handler',
             'smepay_data',
@@ -106,17 +130,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
-        if ( 'block' === $checkout_layout['layout'] ) {
-            return;
-        }
-
-        wp_enqueue_script(
-            'smepfowo-handler',
-            SMEPFOWO_URL . 'resources/js/frontend/smepfowo-classic-checkout.js',
-            [ 'jquery' ],
-            SMEPFOWO_VERSION,
-            true
-        );
+        // Finally enqueue the script
+        wp_enqueue_script( 'smepfowo-handler' );
     }
 
     /**
@@ -150,11 +165,11 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 'desc_tip'    => true,
             ],
             'client_id'               => [
-                'title' => 'Client ID',
+                'title' => __( 'Client ID', 'smepay-for-woocommerce' ),
                 'type'  => 'text',
             ],
             'client_secret'           => [
-                'title' => 'Client Secret',
+                'title' => __( 'Client Secret', 'smepay-for-woocommerce' ),
                 'type'  => 'password',
             ],
             'result'                  => [
@@ -350,12 +365,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( isset( $decoded_response['status'], $decoded_response['payment_status'] ) && $decoded_response['status'] && 'paid' === $decoded_response['payment_status'] ) {
             if ( $order->get_status() !== 'completed' ) {
                 $order->payment_complete();
-                $order->add_order_note( 'Payment confirmed via SMEPay.' );
+                $order->add_order_note( __( 'Payment confirmed via SMEPay.', 'smepay-for-woocommerce' ) );
             }
         } else {
             if ( $order->get_status() !== 'failed' ) {
-                $order->update_status( 'failed', 'Payment failed via SMEPay.' );
-                $order->add_order_note( 'Payment failed via SMEPay.' );
+                $order->update_status( 'failed', __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
+                $order->add_order_note( __( 'Payment failed via SMEPay..', 'smepay-for-woocommerce' ) );
             }
         }
     }

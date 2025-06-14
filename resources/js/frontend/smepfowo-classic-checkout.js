@@ -1,3 +1,5 @@
+const { __ } = wp.i18n;
+
 jQuery(function ($) {
   const $form = $('form.checkout');
 
@@ -7,10 +9,8 @@ jQuery(function ($) {
     const selectedMethod = $('input[name="payment_method"]:checked').val();
     if (selectedMethod !== 'smepfowo') return true;
 
-    // Block form while processing
     $form.block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
 
-    // Clear previous errors
     $('.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message, .is-error').remove();
 
     const formData = $form.serialize();
@@ -21,25 +21,21 @@ jQuery(function ($) {
       data: formData,
       dataType: 'json',
       success: function (response) {
-        console.log('✅ AJAX response:', response);
+        console.log(__('✅ AJAX response:', 'smepay-for-woocommerce'), response);
 
         $form.unblock();
 
         if (response.result === 'failure') {
-          // Append server error messages if present
           if (response.messages) {
             $form.prepend(response.messages);
           } else {
             $form.prepend(`
-                <div class="woocommerce-error is-error" role="alert">
-                  ⚠️ <strong aria-label="Warning">Something went wrong.</strong> Please try again later.
-                </div>
-
+              <div class="woocommerce-error is-error" role="alert">
+                ⚠️ <strong aria-label="Warning">${__('Something went wrong.', 'smepay-for-woocommerce')}</strong> ${__('Please try again later.', 'smepay-for-woocommerce')}
+              </div>
             `);
-
           }
 
-          // Scroll to error
           const $error = $('.woocommerce-error, .woocommerce-NoticeGroup-checkout, .is-error');
           if ($error.length) {
             $('html, body').animate({ scrollTop: $error.offset().top - 100 }, 600);
@@ -49,24 +45,23 @@ jQuery(function ($) {
         }
 
         if (response.result === 'success' && response.smepay_slug) {
-          // Launch SMEPay widget
           window.smepayCheckout({
             slug: response.smepay_slug,
             onSuccess: function () {
               window.location.href = response.redirect_url;
             },
             onFailure: function () {
-              console.warn('❌ SMEPay widget closed or failed.');
+              console.warn(__('❌ SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
             }
           });
         } else {
-          console.warn('⚠️ Unexpected response:', response);
+          console.warn(__('⚠️ Unexpected response:', 'smepay-for-woocommerce'), response);
         }
       },
       error: function (err) {
-        console.error('🔥 AJAX error:', err);
+        console.error(__('🔥 AJAX error:', 'smepay-for-woocommerce'), err);
         $form.unblock();
-        $form.prepend('<div class="woocommerce-error is-error">Unexpected error occurred. Please try again.</div>');
+        $form.prepend(`<div class="woocommerce-error is-error">${__('Unexpected error occurred. Please try again.', 'smepay-for-woocommerce')}</div>`);
       }
     });
 
