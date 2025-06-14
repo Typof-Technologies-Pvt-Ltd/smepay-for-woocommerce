@@ -20,7 +20,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // Define constants
-define( 'SMEPFOWO_VERSION', '1.7.0' );
+define( 'SMEPFOWO_VERSION', '1.0.0' );
 define( 'SMEPFOWO_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SMEPFOWO_URL', plugin_dir_url( __FILE__ ) );
 define( 'SMEPFOWO_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
