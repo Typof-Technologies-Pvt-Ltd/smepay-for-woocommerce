@@ -67,11 +67,15 @@ const triggerSMEPayIfSelected = () => {
     }
 };
 
-// Run once on load if SMEPay is selected
+// On load: auto-select SMEPay if slug is present
 window.addEventListener('load', () => {
-    const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
-    if (selectedPayment?.value === 'smepfowo') {
-        setTimeout(triggerSMEPayIfSelected, 500);
+    if (smepaySlug) {
+        const input = document.querySelector('input[name="payment_method"][value="smepfowo"]');
+        if (input) {
+            input.checked = true;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        setTimeout(triggerSMEPay, 500);
     }
 });
 
