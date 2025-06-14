@@ -75,7 +75,7 @@ window.addEventListener('load', () => {
             input.checked = true;
             input.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        setTimeout(triggerSMEPay, 500);
+        setTimeout(triggerSMEPayIfSelected, 500);
     }
 });
 
