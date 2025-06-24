@@ -28,6 +28,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     protected $client_id;
     protected $client_secret;
 
+    protected $mode;
+
     /**
      * Constructor
      */
@@ -40,6 +42,15 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $this->method_title       = _x( 'SMEPay UPI Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
         $this->method_description = __( 'Pay via UPI apps.', 'smepay-for-woocommerce' );
 
+        $this->mode = strtolower( trim( $this->get_option( 'mode', 'production' ) ) );
+        $this->client_id = $this->mode === 'development'
+            ? $this->get_option( 'dev_client_id' )
+            : $this->get_option( 'client_id' );
+        $this->client_secret = $this->mode === 'development'
+            ? $this->get_option( 'dev_client_secret' )
+            : $this->get_option( 'client_secret' );
+
+
         $this->init_form_fields();
         $this->init_settings();
 
@@ -47,13 +58,37 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $this->description             = $this->get_option( 'description' );
         $this->instructions            = $this->get_option( 'instructions', $this->description );
         $this->hide_for_non_admin_users = $this->get_option( 'hide_for_non_admin_users' );
-        $this->client_id               = $this->get_option( 'client_id' );
-        $this->client_secret           = $this->get_option( 'client_secret' );
 
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
         add_action( 'woocommerce_thankyou', [ $this, 'send_validate_order_request' ], 10, 1 );
         add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
         add_action( 'woocommerce_review_order_before_submit', [ $this, 'add_nonce_to_checkout' ] );
+
+        if ( is_admin() && 'development' === $this->mode ) {
+            add_action( 'admin_notices', function() {
+                printf(
+                    '<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
+                    esc_html__( 'SMEPay:', 'smepay-for-woocommerce' ),
+                    esc_html__( 'You are currently in Development Mode. Orders will use test credentials.', 'smepay-for-woocommerce' )
+                );
+
+            });
+        }
+
+        if ( is_admin() && current_user_can( 'manage_woocommerce' ) ) {
+            add_action( 'admin_enqueue_scripts', [ $this, 'admin_conditional_fields_script' ] );
+        }
+    }
+
+    /**
+     * Get base API URL depending on mode
+     *
+     * @return string
+     */
+    private function get_api_base_url() {
+        return ( $this->mode === 'development' )
+            ? 'https://apps.typof.in/api/'
+            : 'https://apps.typof.com/api/';
     }
 
     /**
@@ -79,6 +114,29 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     public function add_nonce_to_checkout() {
         if ( is_checkout() && ! is_wc_endpoint_url() ) {
             wp_nonce_field( 'smepfowo_nonce_action', 'smepfowo_nonce' );
+        }
+    }
+
+
+    public function admin_conditional_fields_script( $hook ) {
+        if ( 'woocommerce_page_wc-settings' !== $hook ) {
+            return;
+        }
+
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Safe usage for script enqueue on WC settings.
+        if ( isset( $_GET['section'] ) && $_GET['section'] === $this->id ) {
+            wp_add_inline_script( 'jquery', "
+                jQuery(document).ready(function($) {
+                    function toggleSMEPayFields() {
+                        var mode = $('#woocommerce_{$this->id}_mode').val();
+                        $('.smepay-prod-field').closest('tr').toggle(mode === 'production');
+                        $('.smepay-dev-field').closest('tr').toggle(mode === 'development');
+                    }
+
+                    toggleSMEPayFields();
+                    $('#woocommerce_{$this->id}_mode').on('change input', toggleSMEPayFields);
+                });
+            " );
         }
     }
 
@@ -181,13 +239,36 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 'default'     => __( 'Secure by SMEPay.', 'smepay-for-woocommerce' ),
                 'desc_tip'    => true,
             ],
-            'client_id'               => [
-                'title' => __( 'Client ID', 'smepay-for-woocommerce' ),
-                'type'  => 'text',
+            'mode' => [
+                'title'       => __( 'Mode', 'smepay-for-woocommerce' ),
+                'type'        => 'select',
+                'description' => __( 'Select environment mode (Production or Development)', 'smepay-for-woocommerce' ),
+                'default'     => 'production',
+                'desc_tip'    => true,
+                'options'     => [
+                    'production'  => __( 'Production', 'smepay-for-woocommerce' ),
+                    'development' => __( 'Development', 'smepay-for-woocommerce' ),
+                ],
             ],
-            'client_secret'           => [
-                'title' => __( 'Client Secret', 'smepay-for-woocommerce' ),
+            'client_id' => [
+                'title' => __( 'Production Client ID', 'smepay-for-woocommerce' ),
+                'type'  => 'text',
+                'class' => 'smepay-prod-field',
+            ],
+            'client_secret' => [
+                'title' => __( 'Production Client Secret', 'smepay-for-woocommerce' ),
                 'type'  => 'password',
+                'class' => 'smepay-prod-field',
+            ],
+            'dev_client_id' => [
+                'title' => __( 'Development Client ID', 'smepay-for-woocommerce' ),
+                'type'  => 'text',
+                'class' => 'smepay-dev-field',
+            ],
+            'dev_client_secret' => [
+                'title' => __( 'Development Client Secret', 'smepay-for-woocommerce' ),
+                'type'  => 'password',
+                'class' => 'smepay-dev-field',
             ],
             'result'                  => [
                 'title'    => __( 'Payment result', 'smepay-for-woocommerce' ),
@@ -308,7 +389,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         ];
 
         $response = wp_remote_post(
-            'https://apps.typof.in/api/external/create-order',
+            $this->get_api_base_url() . 'external/create-order',
             [
                 'body'    => wp_json_encode( $data ),
                 'headers' => [
@@ -333,7 +414,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      */
     private function get_access_token() {
         $response = wp_remote_post(
-            'https://apps.typof.in/api/external/auth',
+            $this->get_api_base_url() . 'external/auth',
             [
                 'body'    => wp_json_encode(
                     [
@@ -378,7 +459,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         ];
 
         $response = wp_remote_post(
-            'https://apps.typof.in/api/external/validate-order',
+            $this->get_api_base_url() . 'external/validate-order',
             [
                 'method'  => 'POST',
                 'headers' => [
