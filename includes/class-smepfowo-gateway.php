@@ -32,7 +32,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Constructor
      */
     public function __construct() {
-        $this->icon               = apply_filters( 'smepfowo_gateway_icon', SMEPFOWO_URL . 'resources/img/smepfowo.svg' );
+        $this->icon = apply_filters(
+            'smepfowo_gateway_icon',
+            trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg'
+        );
         $this->has_fields         = false;
         $this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
         $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
@@ -101,7 +104,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             'smepfowo-checkout',
             'https://typof.co/smepay/checkout.js',
             [],
-            SMEPFOWO_VERSION,
+            SMEPay_For_WooCommerce::VERSION,
             true
         );
 
@@ -115,23 +118,26 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return;
         }
 
-        // Register the frontend JS handler
+        // Use recommended path to plugin asset
+        $script_path = 'resources/js/frontend/smepfowo-classic-checkout.js';
+        $script_url  = trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . $script_path;
+
         wp_register_script(
             'smepfowo-handler',
-            SMEPFOWO_URL . 'resources/js/frontend/smepfowo-classic-checkout.js',
+            $script_url,
             [ 'jquery', 'wp-i18n' ],
-            SMEPFOWO_VERSION,
+            SMEPay_For_WooCommerce::VERSION,
             true
         );
 
-        // Set up translations for JavaScript strings
+        // Translation support
         wp_set_script_translations(
             'smepfowo-handler',
             'smepay-for-woocommerce',
-            plugin_dir_path( SMEPFOWO_PATH ) . 'languages'
+            dirname( plugin_basename( __FILE__ ) ) . '/languages'
         );
 
-        // Localize dynamic data
+        // Localize data
         wp_localize_script(
             'smepfowo-handler',
             'smepfowo_data',
@@ -141,9 +147,9 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
-        // Finally enqueue the script
         wp_enqueue_script( 'smepfowo-handler' );
     }
+
 
     /**
      * Init admin fields
@@ -205,20 +211,19 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
 
-        // Ensure only POST requests are allowed
-        if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
-            wc_add_notice( __( 'Invalid request method.', 'smepay-for-woocommerce' ), 'error' );
-            return [ 'result' => 'failure' ];
-        }
-
         // Skip if using block checkout layout
-        if ( 'block' != $checkout_layout['layout'] ) {
-            $nonce = sanitize_text_field( $_POST['smepfowo_nonce'] ?? '' );
+        if ( 'block' !== $checkout_layout['layout'] ) {
+            $nonce = isset( $_POST['smepfowo_nonce'] )
+                ? sanitize_text_field( wp_unslash( $_POST['smepfowo_nonce'] ) )
+                : '';
+
             if ( ! $nonce || ! wp_verify_nonce( $nonce, 'smepfowo_nonce_action' ) ) {
                 wc_add_notice( __( 'Security check failed. Please refresh the page and try again.', 'smepay-for-woocommerce' ), 'error' );
                 return [ 'result' => 'failure' ];
             }
         }
+
+
 
         $payment_result = $this->get_option( 'result' );
         $order          = wc_get_order( $order_id );

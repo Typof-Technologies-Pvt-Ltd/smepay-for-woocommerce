@@ -59,47 +59,46 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
                 $is_paid = true;
             }
         }
-        
-        $script_path = '/resources/js/frontend/smepfowo-block-checkout.js';
-        $script_url  = SMEPFOWO_URL . $script_path;
+
+        $script_handle = 'smepfowo-payments-blocks';
+        $script_rel_path = 'resources/js/frontend/smepfowo-block-checkout.js';
+        $script_url = trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . $script_rel_path;
 
         wp_register_script(
-            'smepfowo-payments-blocks',
+            $script_handle,
             $script_url,
             [
-                'wc-blocks-registry', // Ensure wc-blocks-registry is loaded.
+                'wc-blocks-registry',
                 'wc-settings',
                 'wp-element',
                 'wp-hooks',
                 'wp-html-entities',
                 'wp-i18n',
             ],
-            SMEPFOWO_VERSION, // Replace with your desired version.
+            SMEPay_For_WooCommerce::VERSION,
             true
         );
 
-        wp_script_add_data( 'smepfowo-payments-blocks', 'type', 'module' ); // Set as ES Module.
+        wp_script_add_data( $script_handle, 'type', 'module' );
 
         if ( function_exists( 'wp_set_script_translations' ) ) {
             wp_set_script_translations(
-                'smepfowo-payments-blocks',
+                $script_handle,
                 'smepay-for-woocommerce',
-                SMEPFOWO_PATH . 'languages/'
+                dirname( plugin_basename( __FILE__ ) ) . '/languages/'
             );
         }
 
-        // Localize orderPaid boolean and image URL for JS
         wp_localize_script(
-            'smepfowo-payments-blocks',
+            $script_handle,
             'smepfowoCheckoutData',
             [
                 'orderPaid' => $is_paid,
-                'imgUrl'    => SMEPFOWO_URL . 'resources/img/smepfowo.svg',
+                'imgUrl' => trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg',
             ]
         );
 
-
-        return [ 'smepfowo-payments-blocks' ];
+        return [ $script_handle ];
     }
 
     /**

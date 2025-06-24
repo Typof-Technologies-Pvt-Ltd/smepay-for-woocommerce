@@ -19,18 +19,16 @@
 
 defined( 'ABSPATH' ) || exit;
 
-// Define constants
-define( 'SMEPFOWO_VERSION', '1.0.0' );
-define( 'SMEPFOWO_PATH', plugin_dir_path( __FILE__ ) );
-define( 'SMEPFOWO_URL', plugin_dir_url( __FILE__ ) );
-define( 'SMEPFOWO_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
-
 /**
  * Class SMEPay_For_WooCommerce
  *
  * Main plugin class for SMEPay integration with WooCommerce.
  */
 class SMEPay_For_WooCommerce {
+
+
+    // Define plugin version
+    const VERSION = '1.0.0';
 
     /**
      * @var SMEPay_For_WooCommerce|null Holds the singleton instance.
@@ -56,7 +54,7 @@ class SMEPay_For_WooCommerce {
         add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
 
         // Add settings link on plugin list.
-        add_filter( 'plugin_action_links_' . SMEPFOWO_PLUGIN_BASENAME, array( __CLASS__, 'add_settings_link' ) );
+        add_filter( 'plugin_action_links_' . SMEPay_For_WooCommerce::plugin_basename(), array( __CLASS__, 'add_settings_link' ) );
     }
 
     /**
@@ -97,10 +95,10 @@ class SMEPay_For_WooCommerce {
      * @return void
      */
     public static function includes() {
-        require_once SMEPFOWO_PATH . 'includes/class-smepfowo-utils.php';
+        require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/class-smepfowo-utils.php';
 
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
-            require_once SMEPFOWO_PATH . 'includes/class-smepfowo-gateway.php';
+            require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/class-smepfowo-gateway.php';
         }
     }
 
@@ -141,7 +139,7 @@ class SMEPay_For_WooCommerce {
      */
     public static function smepfowo_register_block_gateway() {
         if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
-            require_once SMEPFOWO_PATH . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
+            require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
 
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
@@ -159,6 +157,18 @@ class SMEPay_For_WooCommerce {
      */
     public static function plugin_url() {
         return untrailingslashit( plugins_url( '/', __FILE__ ) );
+    }
+
+    /**
+     * Get the plugin basename.
+     *
+     * Returns the plugin basename, used in filters and actions to identify
+     * the plugin file path relative to the plugins directory.
+     *
+     * @return string Plugin basename (e.g. "smepay-for-woocommerce/smepay-for-woocommerce.php").
+     */
+    public static function plugin_basename() {
+        return plugin_basename( __FILE__ );
     }
 
     /**
