@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-06-24T09:13:18+00:00\n"
+"POT-Creation-Date: 2025-06-24T09:22:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: smepay-for-woocommerce\n"
@@ -40,13 +40,12 @@ msgid "https://profiles.wordpress.org/smepay"
 msgstr ""
 
 #: includes/class-smepfowo-gateway.php:40
-#: includes/class-smepfowo-gateway.php:174
 msgctxt "SMEPay payment method"
-msgid "UPI Pay"
+msgid "SMEPay UPI Payment"
 msgstr ""
 
 #: includes/class-smepfowo-gateway.php:41
-msgid "Pay via UPI QR code using SMEPay."
+msgid "Pay via UPI apps."
 msgstr ""
 
 #: includes/class-smepfowo-gateway.php:160
@@ -67,6 +66,11 @@ msgstr ""
 
 #: includes/class-smepfowo-gateway.php:173
 msgid "This controls the title which the user sees during checkout."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:174
+msgctxt "SMEPay payment method"
+msgid "UPI Pay"
 msgstr ""
 
 #: includes/class-smepfowo-gateway.php:178

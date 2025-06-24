@@ -37,8 +37,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg'
         );
         $this->has_fields         = false;
-        $this->method_title       = _x( 'UPI Pay', 'SMEPay payment method', 'smepay-for-woocommerce' );
-        $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
+        $this->method_title       = _x( 'SMEPay UPI Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
+        $this->method_description = __( 'Pay via UPI apps.', 'smepay-for-woocommerce' );
 
         $this->init_form_fields();
         $this->init_settings();
