@@ -13,7 +13,8 @@ jQuery(function ($) {
 
     $('.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message, .is-error').remove();
 
-    const formData = $form.serialize();
+    let formData = $form.serialize();
+    formData += '&smepfowo_nonce=' + encodeURIComponent(smepfowo_data.nonce);
 
     $.ajax({
       type: 'POST',

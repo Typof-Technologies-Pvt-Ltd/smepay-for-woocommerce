@@ -50,16 +50,13 @@ class SMEPay_For_WooCommerce {
         add_filter( 'woocommerce_payment_gateways', array( __CLASS__, 'add_gateway' ) );
 
         // Register WooCommerce Blocks support.
-        add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'woocommerce_gateway_smepay_woocommerce_block_support' ) );
+        add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'smepfowo_register_block_gateway' ) );
 
         // Admin SSL warning.
         add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
 
         // Add settings link on plugin list.
         add_filter( 'plugin_action_links_' . SMEPFOWO_PLUGIN_BASENAME, array( __CLASS__, 'add_settings_link' ) );
-
-        // Load translation files.
-        add_action( 'plugins_loaded', array( __CLASS__, 'load_textdomain' ) );
     }
 
     /**
@@ -138,29 +135,11 @@ class SMEPay_For_WooCommerce {
     }
 
     /**
-     * Load plugin translation files.
-     *
-     * @return void
-     */
-    public static function load_textdomain() {
-        load_textdomain(
-            'smepay-for-woocommerce',
-            WP_LANG_DIR . '/smepay-for-woocommerce/smepay-for-woocommerce-' . get_locale() . '.mo'
-        );
-
-        load_plugin_textdomain(
-            'smepay-for-woocommerce',
-            false,
-            dirname( plugin_basename( __FILE__ ) ) . '/languages'
-        );
-    }
-
-    /**
      * Register WooCommerce Blocks payment gateway integration.
      *
      * @return void
      */
-    public static function woocommerce_gateway_smepay_woocommerce_block_support() {
+    public static function smepfowo_register_block_gateway() {
         if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
             require_once SMEPFOWO_PATH . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
 
@@ -197,5 +176,5 @@ if (
     in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ||
     ( is_multisite() && in_array( 'woocommerce/woocommerce.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
 ) {
-    SMEPay_For_WooCommerce::get_instance()->init();
+    SMEPay_For_WooCommerce::init();
 }

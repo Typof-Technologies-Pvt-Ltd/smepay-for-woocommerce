@@ -57,30 +57,52 @@ Currently, SMEPay supports one-time payments via UPI. For recurring payments, yo
 
 == External Services ==
 
-This plugin connects to the **SMEPay** platform to process UPI payments.
+This plugin connects to the **SMEPay** platform, operated by **Typof Technologies**, to process UPI payments within WooCommerce.
 
 ### What external services are used and why:
 
-The plugin uses the following SMEPay API endpoints to enable UPI payment functionality:
-- **Create Order**: `https://apps.typof.in/api/external/create-order`  
-  Used to create a unique UPI payment request based on the WooCommerce order.
-- **Validate Order**: `https://apps.typof.in/api/external/validate-order`  
-  Used to confirm payment status after the customer completes payment.
-- **Auth**: `https://apps.typof.in/api/external/auth`  
-  Used to authenticate your WooCommerce store with SMEPay using API credentials.
-- **Frontend Script**: `https://typof.co/smepay/checkout.js`  
-  A secure JavaScript widget that shows the payment QR and handles frontend interactions.
+The plugin uses the following SMEPay API endpoints:
+
+- **Create Order**  
+  URL: `https://apps.typof.in/api/external/create-order`  
+  Purpose: Creates a new UPI payment request using WooCommerce order details.
+
+- **Validate Order**  
+  URL: `https://apps.typof.in/api/external/validate-order`  
+  Purpose: Verifies whether the customer completed the UPI payment successfully.
+
+- **Authenticate Store**  
+  URL: `https://apps.typof.in/api/external/auth`  
+  Purpose: Authenticates your WooCommerce store with SMEPay using your client credentials.
+
+- **Frontend Widget Script**  
+  URL: `https://typof.co/smepay/checkout.js`  
+  Purpose: Loads a secure JavaScript widget that displays the UPI QR code and manages payment interactions on the checkout page.
 
 ### What data is sent:
-- During checkout, basic order details like order ID, total amount, and currency are sent to SMEPay.
-- The plugin uses your SMEPay **client ID and client secret** to authenticate.
-- No sensitive customer information (such as name, email, or phone) is transmitted unless required by your merchant configuration.
+
+- Order ID and total amount
+- Currency
+- Callback URL (order thank-you page)
+- Customer details (name, email, phone)
+- SMEPay Client ID and Client Secret for authentication
+
+### When data is sent:
+
+- When SMEPay is selected at checkout and an order is created
+- After payment, to confirm the payment status via validation API
+
+### Why this data is needed:
+
+- To generate a unique, transaction-specific UPI QR code
+- To confirm that the payment was completed successfully
+- To securely link each payment to the corresponding WooCommerce order
 
 ### Service Provider:
-**SMEPay by Typof Technologies**
 
-- Terms of Service: https://smepay.io/tnc
-- Privacy Policy: https://smepay.io/privacy-policy
+**SMEPay by Typof Technologies**  
+- [Terms of Service](https://smepay.io/tnc)  
+- [Privacy Policy](https://smepay.io/privacy-policy)
 
 == Changelog ==
 

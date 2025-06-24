@@ -32,7 +32,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Constructor
      */
     public function __construct() {
-        $this->icon               = apply_filters( 'smepayfowo_gateway_icon', SMEPFOWO_URL . 'resources/img/smepay.svg' );
+        $this->icon               = apply_filters( 'smepfowo_gateway_icon', SMEPFOWO_URL . 'resources/img/smepfowo.svg' );
         $this->has_fields         = false;
         $this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
         $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
@@ -50,6 +50,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
         add_action( 'woocommerce_thankyou', [ $this, 'send_validate_order_request' ], 10, 1 );
         add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
+        add_action( 'woocommerce_review_order_before_submit', [ $this, 'add_nonce_to_checkout' ] );
     }
 
     /**
@@ -70,12 +71,22 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     }
 
     /**
+     * Output a nonce field on the checkout page
+     */
+    public function add_nonce_to_checkout() {
+        if ( is_checkout() && ! is_wc_endpoint_url() ) {
+            wp_nonce_field( 'smepfowo_nonce_action', 'smepfowo_nonce' );
+        }
+    }
+
+
+    /**
      * Enqueue frontend scripts
      */
     public function payment_scripts() {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-        $checkout_layout = $this->smepay_detect_checkout_layout_backend();
+        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
 
         if ( ! is_cart() && ! is_checkout() && ! isset( $_GET['pay_for_order'] ) && ! is_order_received_page() ) {
             return;
@@ -123,10 +134,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Localize dynamic data
         wp_localize_script(
             'smepfowo-handler',
-            'smepay_data',
+            'smepfowo_data',
             [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
-                'nonce'    => wp_create_nonce( 'smepay_nonce' ),
+                'nonce'    => wp_create_nonce( 'smepfowo_nonce_action' ),
             ]
         );
 
@@ -191,9 +202,27 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Process payment
      */
     public function process_payment( $order_id ) {
+
+        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
+
+        // Ensure only POST requests are allowed
+        if ( $_SERVER['REQUEST_METHOD'] !== 'POST' ) {
+            wc_add_notice( __( 'Invalid request method.', 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
+        }
+
+        // Skip if using block checkout layout
+        if ( 'block' != $checkout_layout['layout'] ) {
+            $nonce = sanitize_text_field( $_POST['smepfowo_nonce'] ?? '' );
+            if ( ! $nonce || ! wp_verify_nonce( $nonce, 'smepfowo_nonce_action' ) ) {
+                wc_add_notice( __( 'Security check failed. Please refresh the page and try again.', 'smepay-for-woocommerce' ), 'error' );
+                return [ 'result' => 'failure' ];
+            }
+        }
+
         $payment_result = $this->get_option( 'result' );
         $order          = wc_get_order( $order_id );
-        $slug           = $this->create_smepay_order( $order );
+        $slug           = $this->smepfowo_create_smepay_order( $order );
 
         if ( ! $slug ) {
             wc_add_notice( __( 'Failed to initiate SMEPay session. Please try again.', 'smepay-for-woocommerce' ), 'error' );
@@ -203,7 +232,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $order->update_meta_data( '_smepay_slug', $slug );
         $order->save();
 
-        $checkout_layout = $this->smepay_detect_checkout_layout_backend();
+        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
         $redirect        = ( 'block' === $checkout_layout['layout'] )
             ? add_query_arg(
                 [
@@ -239,7 +268,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     /**
      * Create SMEPay order
      */
-    private function create_smepay_order( $order ) {
+    private function smepfowo_create_smepay_order( $order ) {
         $base_order_id  = (string) $order->get_id();
         $new_order_id   = $base_order_id . '-' . time();
         $existing_order_id = $order->get_meta( '_smepay_order_id' );

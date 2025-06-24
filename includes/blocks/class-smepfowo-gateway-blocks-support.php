@@ -94,7 +94,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
             'smepfowoCheckoutData',
             [
                 'orderPaid' => $is_paid,
-                'imgUrl'    => SMEPFOWO_URL . 'resources/img/smepay.svg',
+                'imgUrl'    => SMEPFOWO_URL . 'resources/img/smepfowo.svg',
             ]
         );
 

@@ -9,7 +9,7 @@ trait SMEPFOWO_Utils {
      *     @type string $layout 'block', 'classic', 'block+shortcode', or 'unknown'
      * }
      */
-    function smepay_detect_checkout_layout_backend() {
+    function smepfowo_detect_checkout_layout_backend() {
 	    $is_block_theme = wp_is_block_theme();
 	    $theme_type     = $is_block_theme ? 'block' : 'classic';
 
