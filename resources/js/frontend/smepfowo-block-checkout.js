@@ -6,8 +6,8 @@ const { __ } = window.wp.i18n;
 const smepfowoLogo = window.smepfowoCheckoutData?.imgUrl || '';
 
 // Translatable label and description
-const smepfowoLabelText = __('SMEPay for WooCommerce', 'smepay-for-woocommerce');
-const smepfowoContent = () => __('Pay securely using SMEPay UPI.', 'smepay-for-woocommerce');
+const smepfowoLabelText = __('UPI Pay', 'smepay-for-woocommerce');
+const smepfowoContent = () => __('Secure by SMEPay.', 'smepay-for-woocommerce');
 
 // Get URL parameters
 const urlParams = new URLSearchParams(window.location.search);

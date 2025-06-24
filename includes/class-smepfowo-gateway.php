@@ -37,7 +37,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg'
         );
         $this->has_fields         = false;
-        $this->method_title       = _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
+        $this->method_title       = _x( 'UPI Pay', 'SMEPay payment method', 'smepay-for-woocommerce' );
         $this->method_description = __( 'Pay via UPI QR code using SMEPay.', 'smepay-for-woocommerce' );
 
         $this->init_form_fields();
@@ -171,14 +171,14 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 'title'       => __( 'Title', 'smepay-for-woocommerce' ),
                 'type'        => 'text',
                 'description' => __( 'This controls the title which the user sees during checkout.', 'smepay-for-woocommerce' ),
-                'default'     => _x( 'SMEPay Payment', 'SMEPay payment method', 'smepay-for-woocommerce' ),
+                'default'     => _x( 'UPI Pay', 'SMEPay payment method', 'smepay-for-woocommerce' ),
                 'desc_tip'    => true,
             ],
             'description'             => [
                 'title'       => __( 'Description', 'smepay-for-woocommerce' ),
                 'type'        => 'textarea',
                 'description' => __( 'Payment method description that the customer will see on your checkout.', 'smepay-for-woocommerce' ),
-                'default'     => __( 'The goods are yours. Pay using UPI Payment via SMEPay.', 'smepay-for-woocommerce' ),
+                'default'     => __( 'Secure by SMEPay.', 'smepay-for-woocommerce' ),
                 'desc_tip'    => true,
             ],
             'client_id'               => [
