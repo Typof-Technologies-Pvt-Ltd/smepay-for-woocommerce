@@ -14,7 +14,7 @@ SMEPay for WooCommerce is a WordPress plugin that enables WooCommerce stores to 
 
 == Description ==
 
-This plugin allows WooCommerce stores to accept payments through **SMEPay** using a UPI QR code. Customers can scan the QR code for instant payments. The plugin is easy to install, configure, and works with the latest version of WooCommerce.
+SMEPay for WooCommerce is a WordPress plugin designed specifically for Indian WooCommerce stores to accept payments via UPI QR codes. With SMEPay, customers can quickly scan a QR code at checkout to make instant payments using their preferred UPI-enabled mobile app like Google Pay, PhonePe, or Paytm. The plugin is easy to install, configure, and fully compatible with the latest WooCommerce versions.
 
 ### Features:
 - **UPI Payments Integration**: Accept UPI payments via QR code.
