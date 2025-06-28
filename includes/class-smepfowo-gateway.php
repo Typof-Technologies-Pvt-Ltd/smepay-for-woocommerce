@@ -66,14 +66,17 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         if ( is_admin() && 'development' === $this->mode ) {
             add_action( 'admin_notices', function() {
-                printf(
-                    '<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
-                    esc_html__( 'SMEPay:', 'smepay-for-woocommerce' ),
-                    esc_html__( 'You are currently in Development Mode. Orders will use test credentials.', 'smepay-for-woocommerce' )
-                );
-
-            });
+                $screen = get_current_screen();
+                if ( isset( $screen->id ) && strpos( $screen->id, 'woocommerce' ) !== false ) {
+                    printf(
+                        '<div class="notice notice-warning"><p><strong>%s</strong> %s</p></div>',
+                        esc_html__( 'SMEPay:', 'smepay-for-woocommerce' ),
+                        esc_html__( 'You are currently in Development Mode. Orders will use test credentials.', 'smepay-for-woocommerce' )
+                    );
+                }
+            } );
         }
+
 
         if ( is_admin() && current_user_can( 'manage_woocommerce' ) ) {
             add_action( 'admin_enqueue_scripts', [ $this, 'admin_conditional_fields_script' ] );
