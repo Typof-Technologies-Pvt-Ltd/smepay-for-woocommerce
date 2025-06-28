@@ -64,7 +64,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
 
         $script_handle = 'smepfowo-payments-blocks';
         $script_rel_path = 'resources/js/frontend/smepfowo-block-checkout.js';
-        $script_url = trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . $script_rel_path;
+        $script_url = trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . $script_rel_path;
 
         wp_register_script(
             $script_handle,
@@ -77,7 +77,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
                 'wp-html-entities',
                 'wp-i18n',
             ],
-            SMEPay_For_WooCommerce::VERSION,
+            SMEPFOWO_Plugin::VERSION,
             true
         );
 
@@ -96,7 +96,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
             'smepfowoCheckoutData',
             [
                 'orderPaid' => $is_paid,
-                'imgUrl' => trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg',
+                'imgUrl' => trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/img/smepfowo.svg',
             ]
         );
 

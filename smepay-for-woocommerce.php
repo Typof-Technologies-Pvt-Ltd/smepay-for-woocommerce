@@ -20,18 +20,18 @@
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Class SMEPay_For_WooCommerce
+ * Class SMEPFOWO_Plugin
  *
  * Main plugin class for SMEPay integration with WooCommerce.
  */
-class SMEPay_For_WooCommerce {
+class SMEPFOWO_Plugin {
 
 
     // Define plugin version
     const VERSION = '1.0.0';
 
     /**
-     * @var SMEPay_For_WooCommerce|null Holds the singleton instance.
+     * @var SMEPFOWO_Plugin|null Holds the singleton instance.
      */
     private static $instance = null;
 
@@ -54,7 +54,7 @@ class SMEPay_For_WooCommerce {
         add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
 
         // Add settings link on plugin list.
-        add_filter( 'plugin_action_links_' . SMEPay_For_WooCommerce::plugin_basename(), array( __CLASS__, 'add_settings_link' ) );
+        add_filter( 'plugin_action_links_' . SMEPFOWO_Plugin::plugin_basename(), array( __CLASS__, 'add_settings_link' ) );
     }
 
     /**
@@ -63,7 +63,7 @@ class SMEPay_For_WooCommerce {
      * This ensures only one instance is ever created — useful for managing
      * shared state or avoiding duplicate hooks/execution.
      *
-     * @return SMEPay_For_WooCommerce The single plugin instance.
+     * @return SMEPFOWO_Plugin The single plugin instance.
      */
     public static function get_instance() {
         if ( is_null( self::$instance ) ) {
@@ -95,10 +95,10 @@ class SMEPay_For_WooCommerce {
      * @return void
      */
     public static function includes() {
-        require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/class-smepfowo-utils.php';
+        require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-utils.php';
 
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
-            require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/class-smepfowo-gateway.php';
+            require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-gateway.php';
         }
     }
 
@@ -143,7 +143,7 @@ class SMEPay_For_WooCommerce {
      */
     public static function smepfowo_register_block_gateway() {
         if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
-            require_once SMEPay_For_WooCommerce::plugin_abspath() . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
+            require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
 
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
@@ -190,5 +190,5 @@ if (
     in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ||
     ( is_multisite() && in_array( 'woocommerce/woocommerce.php', get_site_option( 'active_sitewide_plugins', array() ) ) )
 ) {
-    SMEPay_For_WooCommerce::init();
+    SMEPFOWO_Plugin::init();
 }

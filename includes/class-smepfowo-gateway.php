@@ -36,7 +36,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     public function __construct() {
         $this->icon = apply_filters(
             'smepfowo_gateway_icon',
-            trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . 'resources/img/smepfowo.svg'
+            trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/img/smepfowo.svg'
         );
         $this->has_fields         = false;
         $this->method_title       = _x( 'SMEPay UPI Payment', 'SMEPay payment method', 'smepay-for-woocommerce' );
@@ -94,14 +94,25 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             : 'https://apps.typof.com/api/';
     }
 
+    /**
+     * Get the current mode of the gateway.
+     *
+     * @return string Returns the mode, e.g. 'production' or 'sandbox'.
+     */
     public function get_mode() {
         return $this->mode;
     }
 
+    /**
+     * Determine if SSL is required for this gateway.
+     *
+     * @return bool Returns true if the gateway requires SSL (i.e., in production mode), false otherwise.
+     */
     public function requires_ssl() {
         return $this->get_mode() === 'production';
     }
 
+    
     /**
      * Determine whether the gateway is available at checkout.
      *
@@ -173,7 +184,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             'smepfowo-checkout',
             'https://typof.co/smepay/checkout.js',
             [],
-            SMEPay_For_WooCommerce::VERSION,
+            SMEPFOWO_Plugin::VERSION,
             true
         );
 
@@ -189,13 +200,13 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         // Use recommended path to plugin asset
         $script_path = 'resources/js/frontend/smepfowo-classic-checkout.js';
-        $script_url  = trailingslashit( SMEPay_For_WooCommerce::plugin_url() ) . $script_path;
+        $script_url  = trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . $script_path;
 
         wp_register_script(
             'smepfowo-handler',
             $script_url,
             [ 'jquery', 'wp-i18n' ],
-            SMEPay_For_WooCommerce::VERSION,
+            SMEPFOWO_Plugin::VERSION,
             true
         );
 
