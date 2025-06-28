@@ -37,9 +37,11 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
      * @return boolean
      */
     public function is_active() {
-        // Ensure SSL is being used
-        if ( ! is_ssl() ) {
-            return false;
+        if ( $this->gateway->requires_ssl() ) {
+            // SSL is required but not used
+            if ( ! is_ssl() ) {
+                return false;
+            }
         }
         return $this->gateway->is_available();
     }

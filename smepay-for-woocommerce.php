@@ -108,16 +108,20 @@ class SMEPay_For_WooCommerce {
      * @return void
      */
     public static function check_ssl_requirement() {
-        if ( ! is_ssl() ) {
-            echo '<div class="notice notice-error is-dismissible">';
-            printf(
-                '<p><strong>%s</strong> %s</p>',
-                esc_html__( 'SMEPay for WooCommerce:', 'smepay-for-woocommerce' ),
-                esc_html__( 'SSL is required to use this payment gateway. Please enable SSL on your website for secure transactions.', 'smepay-for-woocommerce' )
-            );
-            echo '</div>';
+        if ( ! is_ssl() && is_admin() ) {
+            $screen = get_current_screen();
+            if ( isset( $screen->id ) && strpos( $screen->id, 'woocommerce' ) !== false ) {
+                echo '<div class="notice notice-error is-dismissible">';
+                printf(
+                    '<p><strong>%s</strong> %s</p>',
+                    esc_html__( 'SMEPay for WooCommerce:', 'smepay-for-woocommerce' ),
+                    esc_html__( 'SSL is required to use this payment gateway in production. Please enable SSL on your website for secure transactions.', 'smepay-for-woocommerce' )
+                );
+                echo '</div>';
+            }
         }
     }
+
 
     /**
      * Add "Settings" link to the plugin's action links in the Plugins list.

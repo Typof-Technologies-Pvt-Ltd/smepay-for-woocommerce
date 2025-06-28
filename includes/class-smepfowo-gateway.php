@@ -91,13 +91,21 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             : 'https://apps.typof.com/api/';
     }
 
+    public function get_mode() {
+        return $this->mode;
+    }
+
+    public function requires_ssl() {
+        return $this->get_mode() === 'production';
+    }
+
     /**
      * Determine whether the gateway is available at checkout.
      *
      * @return bool
      */
     public function is_available() {
-        if ( ! is_ssl() ) {
+        if ( ! is_ssl() && $this->requires_ssl() ) {
             return false;
         }
 
@@ -153,8 +161,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return;
         }
 
-        if ( ! is_ssl() ) {
-            return;
+        if ( ! is_ssl() && $this->requires_ssl() ) {
+            return false;
         }
 
         // Load the remote SMEPay widget
