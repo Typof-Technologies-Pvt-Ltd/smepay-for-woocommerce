@@ -151,8 +151,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 jQuery(document).ready(function($) {
                     function toggleSMEPayFields() {
                         var mode = $('#woocommerce_{$this->id}_mode').val();
-                        $('.smepay-prod-field').closest('tr').toggle(mode === 'production');
-                        $('.smepay-dev-field').closest('tr').toggle(mode === 'development');
+                        $('.smepfowo-prod-field').closest('tr').toggle(mode === 'production');
+                        $('.smepfowo-dev-field').closest('tr').toggle(mode === 'development');
                     }
 
                     toggleSMEPayFields();
@@ -164,19 +164,36 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
 
     /**
+     * Get and cache the checkout layout.
+     *
+     * @return array
+     */
+    protected function get_checkout_layout() {
+        static $layout = null;
+
+        if ( $layout === null ) {
+            $layout = $this->smepfowo_detect_checkout_layout_backend();
+        }
+
+        return $layout;
+    }
+
+
+
+    /**
      * Enqueue frontend scripts
      */
     public function payment_scripts() {
         // phpcs:disable WordPress.Security.NonceVerification.Recommended
 
-        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
+        $checkout_layout = $this->get_checkout_layout();
 
         if ( ! is_cart() && ! is_checkout() && ! isset( $_GET['pay_for_order'] ) && ! is_order_received_page() ) {
             return;
         }
 
         if ( ! is_ssl() && $this->requires_ssl() ) {
-            return false;
+            return;
         }
 
         // Load the remote SMEPay widget
@@ -214,7 +231,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         wp_set_script_translations(
             'smepfowo-handler',
             'smepay-for-woocommerce',
-            dirname( plugin_basename( __FILE__ ) ) . '/languages'
+            SMEPFOWO_Plugin::plugin_abspath() . 'languages/'
         );
 
         // Localize data
@@ -275,27 +292,27 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             'client_id' => [
                 'title' => __( 'Production Client ID', 'smepay-for-woocommerce' ),
                 'type'  => 'text',
-                'class' => 'smepay-prod-field',
+                'class' => 'smepfowo-prod-field',
             ],
             'client_secret' => [
                 'title' => __( 'Production Client Secret', 'smepay-for-woocommerce' ),
                 'type'  => 'password',
-                'class' => 'smepay-prod-field',
+                'class' => 'smepfowo-prod-field',
             ],
             'dev_client_id' => [
                 'title' => __( 'Development Client ID', 'smepay-for-woocommerce' ),
                 'type'  => 'text',
-                'class' => 'smepay-dev-field',
+                'class' => 'smepfowo-dev-field',
             ],
             'dev_client_secret' => [
                 'title' => __( 'Development Client Secret', 'smepay-for-woocommerce' ),
                 'type'  => 'password',
-                'class' => 'smepay-dev-field',
+                'class' => 'smepfowo-dev-field',
             ],
             'result'                  => [
                 'title'    => __( 'Payment result', 'smepay-for-woocommerce' ),
                 'desc'     => __( 'Determine if order payments are successful when using this gateway.', 'smepay-for-woocommerce' ),
-                'id'       => 'woo_smepay_payment_result',
+                'id'       => 'woo_smepfowo_payment_result',
                 'type'     => 'select',
                 'options'  => [
                     'success' => __( 'Success', 'smepay-for-woocommerce' ),
@@ -311,10 +328,9 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Process payment
      */
     public function process_payment( $order_id ) {
+        $checkout_layout = $this->get_checkout_layout();
 
-        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
-
-        // Skip if using block checkout layout
+        // Verify nonce only for classic checkout (non-block)
         if ( 'block' !== $checkout_layout['layout'] ) {
             $nonce = isset( $_POST['smepfowo_nonce'] )
                 ? sanitize_text_field( wp_unslash( $_POST['smepfowo_nonce'] ) )
@@ -326,68 +342,72 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             }
         }
 
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+            wc_add_notice( __( 'Invalid order.', 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
+        }
 
-
-        $payment_result = $this->get_option( 'result' );
-        $order          = wc_get_order( $order_id );
-        $slug           = $this->smepfowo_create_smepay_order( $order );
-
+        $slug = $this->smepfowo_create_order( $order );
         if ( ! $slug ) {
             wc_add_notice( __( 'Failed to initiate SMEPay session. Please try again.', 'smepay-for-woocommerce' ), 'error' );
             return [ 'result' => 'failure' ];
         }
 
-        $order->update_meta_data( '_smepay_slug', $slug );
+        $order->update_meta_data( '_smepfowo_slug', $slug );
         $order->save();
 
-        $checkout_layout = $this->smepfowo_detect_checkout_layout_backend();
-        $redirect        = ( 'block' === $checkout_layout['layout'] )
+        // Prepare redirect URL (only used in block checkout)
+        $redirect_url = ( 'block' === $checkout_layout['layout'] )
             ? add_query_arg(
                 [
-                    'key'          => $order->get_order_key(),
-                    'redirect_url' => $order->get_checkout_order_received_url(),
-                    'smepay_slug'  => $slug,
+                    'key'           => $order->get_order_key(),
+                    'redirect_url'  => $order->get_checkout_order_received_url(),
+                    'smepfowo_slug' => $slug,
                 ],
                 $order->get_checkout_payment_url( false )
             )
             : '';
 
-        if ( 'success' === $payment_result ) {
+        // Handle payment result based on settings
+        $payment_result = $this->get_option( 'result' );
+        if ( $payment_result === 'success' ) {
             return [
-                'result'       => 'success',
-                'smepay_slug'  => $slug,
-                'order_id'     => $order_id,
-                'order_key'    => $order->get_order_key(),
-                'redirect_url' => $order->get_checkout_order_received_url(),
-                'redirect'     => $redirect,
+                'result'        => 'success',
+                'smepfowo_slug' => $slug,
+                'order_id'      => $order_id,
+                'order_key'     => $order->get_order_key(),
+                'redirect_url'  => $order->get_checkout_order_received_url(),
+                'redirect'      => $redirect_url,
             ];
         }
 
-        if ( 'success' !== $payment_result ) {
-            wc_add_notice( __( 'Order payment failed. Please review the gateway settings.', 'smepay-for-woocommerce' ), 'error' );
-            $order->update_status( 'failed', __( 'Order payment failed.', 'smepay-for-woocommerce' ) );
-            return [
-                'result'   => 'failure',
-                'redirect' => '',
-            ];
-        }
+        // On failure
+        wc_add_notice( __( 'Order payment failed. Please review the gateway settings.', 'smepay-for-woocommerce' ), 'error' );
+        $order->update_status( 'failed', __( 'Order payment failed.', 'smepay-for-woocommerce' ) );
+
+        return [
+            'result'   => 'failure',
+            'redirect' => '',
+        ];
     }
 
     /**
      * Create SMEPay order
+     *
+     * @param WC_Order $order WooCommerce order object.
+     * @return string|null SMEPay order slug or null on failure.
      */
-    private function smepfowo_create_smepay_order( $order ) {
-        $base_order_id  = (string) $order->get_id();
-        $new_order_id   = $base_order_id . '-' . time();
-        $existing_order_id = $order->get_meta( '_smepay_order_id' );
+    private function smepfowo_create_order( $order ) {
+        $order_id  = (string) $order->get_id();
+        $timestamp = time();
+        $random    = wp_rand(1000, 9999);
+        $new_order_id = "{$order_id}-{$timestamp}-{$random}";
+        $existing_order_id = $order->get_meta( '_smepfowo_order_id' );
 
-        if ( ! empty( $existing_order_id ) ) {
-            [ $existing_base_id, $existing_timestamp ] = explode( '-', $existing_order_id );
-            [ $new_base_id, $new_timestamp ] = explode( '-', $new_order_id );
-
-            if ( $existing_base_id === $new_base_id && $existing_timestamp === $new_timestamp ) {
-                return null;
-            }
+        // Prevent duplicate creation
+        if ( $existing_order_id === $new_order_id ) {
+            return null;
         }
 
         $token = $this->get_access_token();
@@ -395,10 +415,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        $order->update_meta_data( '_smepay_order_id', $new_order_id );
+        // Save new order ID and persist immediately
+        $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
         $order->save();
 
-        $data = [
+        // Prepare payload
+        $payload = [
             'client_id'        => $this->client_id,
             'amount'           => (string) $order->get_total(),
             'order_id'         => $new_order_id,
@@ -413,7 +435,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $response = wp_remote_post(
             $this->get_api_base_url() . 'external/create-order',
             [
-                'body'    => wp_json_encode( $data ),
+                'body'    => wp_json_encode( $payload ),
                 'headers' => [
                     'Authorization' => 'Bearer ' . $token,
                     'Content-Type'  => 'application/json',
@@ -426,10 +448,18 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        $decoded = json_decode( wp_remote_retrieve_body( $response ), true );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $slug = $body['order_slug'] ?? null;
 
-        return $decoded['order_slug'] ?? null;
+        if ( is_string( $slug ) && $slug !== '' ) {
+            $order->update_meta_data( '_smepfowo_slug', $slug );
+            $order->save();
+            return $slug;
+        }
+
+        return null;
     }
+
 
     /**
      * Get access token
@@ -477,7 +507,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $data = [
             'client_id' => $this->client_id,
             'amount'    => $order->get_total(),
-            'slug'      => $order->get_meta( '_smepay_slug' ),
+            'slug'      => $order->get_meta( '_smepfowo_slug' ),
         ];
 
         $response = wp_remote_post(
@@ -507,7 +537,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         } else {
             if ( $order->get_status() !== 'failed' ) {
                 $order->update_status( 'failed', __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
-                $order->add_order_note( __( 'Payment failed via SMEPay..', 'smepay-for-woocommerce' ) );
+                $order->add_order_note( __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
             }
         }
     }

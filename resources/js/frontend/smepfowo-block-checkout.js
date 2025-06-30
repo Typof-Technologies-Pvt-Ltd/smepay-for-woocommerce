@@ -11,7 +11,7 @@ const smepfowoContent = () => __('Secure by SMEPay.', 'smepay-for-woocommerce');
 
 // Get URL parameters
 const urlParams = new URLSearchParams(window.location.search);
-const smepfowoSlug = urlParams.get('smepay_slug');
+const smepfowoSlug = urlParams.get('smepfowo_slug');
 const smepfowoRedirectUrl = urlParams.get('redirect_url');
 
 // Register SMEPay payment method for block-based checkout
@@ -56,7 +56,7 @@ const smepfowoTriggerPaymentWidget = () => {
         window.smepayCheckout({
             slug: smepfowoSlug,
             onSuccess: function () {
-                window.location.href = smepfowoRedirectUrl + `&smepay_slug=${smepfowoSlug}`;
+                window.location.href = smepfowoRedirectUrl + `&smepfowo_slug=${smepfowoSlug}`;
             },
             onFailure: function () {
                 console.warn(__('SMEPay widget closed or failed.', 'smepay-for-woocommerce'));

@@ -22,10 +22,7 @@ jQuery(function ($) {
       data: formData,
       dataType: 'json',
       success: function (response) {
-        console.log(__('✅ AJAX response:', 'smepay-for-woocommerce'), response);
-
         $form.unblock();
-
         if (response.result === 'failure') {
           if (response.messages) {
             $form.prepend(response.messages);
@@ -45,9 +42,9 @@ jQuery(function ($) {
           return false;
         }
 
-        if (response.result === 'success' && response.smepay_slug) {
+        if (response.result === 'success' && response.smepfowo_slug) {
           window.smepayCheckout({
-            slug: response.smepay_slug,
+            slug: response.smepfowo_slug,
             onSuccess: function () {
               window.location.href = response.redirect_url;
             },

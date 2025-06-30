@@ -26,9 +26,12 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
      * Initializes the payment method type.
      */
     public function initialize() {
+        if ( ! did_action( 'woocommerce_loaded' ) ) {
+            return;
+        }
         $this->settings = get_option( 'woocommerce_smepfowo_settings', [] );
         $gateways       = WC()->payment_gateways->payment_gateways();
-        $this->gateway  = $gateways[ $this->name ];
+        $this->gateway = isset( $gateways[ $this->name ] ) ? $gateways[ $this->name ] : null;
     }
 
     /**
@@ -37,6 +40,9 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
      * @return boolean
      */
     public function is_active() {
+        if ( ! $this->gateway ) {
+            return false;
+        }
         if ( $this->gateway->requires_ssl() ) {
             // SSL is required but not used
             if ( ! is_ssl() ) {
@@ -87,7 +93,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
             wp_set_script_translations(
                 $script_handle,
                 'smepay-for-woocommerce',
-                dirname( plugin_basename( __FILE__ ) ) . '/languages/'
+                SMEPFOWO_Plugin::plugin_abspath() . 'languages/'
             );
         }
 
