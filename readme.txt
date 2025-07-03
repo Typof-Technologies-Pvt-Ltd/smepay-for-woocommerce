@@ -14,7 +14,7 @@ SMEPay for WooCommerce is a WordPress plugin that enables WooCommerce stores to 
 
 == Description ==
 
-SMEPay for WooCommerce is a WordPress plugin designed specifically for Indian WooCommerce stores to accept payments via UPI QR codes. With SMEPay, customers can quickly scan a QR code at checkout to make instant payments using their preferred UPI-enabled mobile app like Google Pay, PhonePe, or Paytm. The plugin is easy to install, configure, and fully compatible with the latest WooCommerce versions.
+SMEPay for WooCommerce is a WordPress plugin built specifically for Indian WooCommerce stores to accept payments via UPI QR codes. With SMEPay, customers can scan a QR code at checkout to make instant payments using popular UPI apps like Google Pay, PhonePe, or Paytm. The plugin is easy to install, configure, and fully compatible with the latest WooCommerce versions.
 
 ### Features:
 - **UPI Payments Integration**: Accept UPI payments via QR code.
@@ -31,93 +31,106 @@ SMEPay for WooCommerce is a WordPress plugin designed specifically for Indian Wo
 
 == Requirements ==
 
-- **SSL Certificate Required**: For secure payment processing, **SSL** (Secure Socket Layer) is mandatory. Your website must have an SSL certificate installed and configured to use the SMEPay payment gateway.
-  - You can verify if your website has SSL by checking for the green padlock icon in your browser's address bar.
-  - If you don't have SSL, consider installing one from your hosting provider.
+- **SSL Certificate Required**: For secure payment processing, your website must have an SSL certificate (HTTPS) installed and configured.
+  - Verify SSL by checking for the padlock icon in your browser’s address bar.
+  - If you don’t have SSL, please obtain one from your hosting provider before enabling SMEPay.
 
 == Frequently Asked Questions ==
 
 = What is SMEPay? =
-**SMEPay** is a payment gateway that enables WooCommerce store owners to accept payments through UPI (Unified Payments Interface) in the form of a QR code. Customers can easily scan the QR code with any UPI-enabled mobile app (like Google Pay, PhonePe, etc.) to make instant payments.
+**SMEPay** is a payment gateway that enables WooCommerce store owners to accept payments through UPI (Unified Payments Interface) via QR codes. Customers scan the QR code with any UPI-enabled mobile app (like Google Pay, PhonePe, etc.) to make instant payments.
 
 = How do I set up SMEPay for WooCommerce? =
-After installing the plugin, go to **WooCommerce > Settings > Payments**, and enable **SMEPay**. You'll need to enter your **SMEPay API credentials**. Once set up, customers will be able to pay via UPI when checking out on your store.
+After installing the plugin, go to **WooCommerce > Settings > Payments**, and enable **SMEPay**. Enter your **SMEPay API credentials**. Once configured, customers can pay via UPI at checkout.
 
 = How do UPI payments work with SMEPay? =
-SMEPay generates a unique QR code for each transaction. Customers can scan the code using their UPI mobile app to make instant payments. Once the payment is successful, the order status will automatically update in WooCommerce.
+SMEPay generates a unique QR code for each transaction. Customers scan it with their UPI app to make instant payments. Upon successful payment, the WooCommerce order status updates automatically.
 
 = Is SMEPay compatible with all WooCommerce themes? =
-Yes, SMEPay works with all WooCommerce-compatible themes. However, it's recommended to test on your site to ensure full compatibility.
+Yes, SMEPay works with all WooCommerce-compatible themes. We recommend testing on your site to ensure full compatibility.
 
 = What UPI apps are supported? =
 SMEPay supports all UPI-enabled apps, including Google Pay, PhonePe, Paytm, and others.
 
 = Can I use SMEPay for recurring payments? =
-Currently, SMEPay supports one-time payments via UPI. For recurring payments, you would need to explore other payment gateways.
+Currently, SMEPay supports only one-time payments via UPI. For recurring payments, consider other payment gateways.
+
+= Is my payment and data secure when using SMEPay? =
+Yes. SMEPay uses secure, authenticated API communication. The plugin shares only the transaction data necessary for payment processing after the customer selects SMEPay at checkout. No additional personal data is collected or stored.
 
 == External Services ==
 
-This plugin connects to the **SMEPay** platform, provided by **Typof Technologies**, to enable UPI payments in your WooCommerce store.
+This plugin connects to the SMEPay platform, a third-party UPI payment service provided by Typof Technologies, to enable UPI payments in your WooCommerce store.
 
 ### 🔧 API Endpoints (Based on Mode)
 
 The plugin uses different endpoints depending on your selected mode:
 
-- **Development Mode** (`mode = development`):
+- **Development Mode** (`mode = development`):  
   Base URL: `https://apps.typof.in/api/…`
 
-- **Production Mode** (`mode = production`):
+- **Production Mode** (`mode = production`):  
   Base URL: `https://apps.typof.com/api/…`
 
 #### Endpoints Used:
-- `/external/auth` – Authenticate WooCommerce store with SMEPay
-- `/external/create-order` – Create UPI QR payment request
+- `/external/auth` – Authenticate WooCommerce store with SMEPay  
+- `/external/create-order` – Create UPI QR payment request  
 - `/external/validate-order` – Validate payment status
 
 #### Frontend Widget Script:
-- `https://typof.co/smepay/checkout.js` – Loads secure UPI QR widget at checkout
+- `https://typof.co/smepay/checkout.js` – This script loads a React-based frontend app that renders the UPI QR code at checkout. It enables customers to scan and pay using their UPI app. It only uses data required to generate and display the QR code for the current WooCommerce order. It does **not** track users, store cookies, or collect personal data outside the transaction context.
 
 ---
 
 ### 📤 Data Shared with SMEPay
 
 During payment processing, the plugin sends:
-- WooCommerce order ID, total amount, currency
-- Customer info (name, email, phone)
-- Callback URL (order confirmation page)
-- SMEPay Client ID & Secret
+- WooCommerce order ID, total amount, currency  
+- Customer info (name, email, phone)  
+- Callback URL (order confirmation page)  
+- SMEPay Client ID & Secret  
 - Mode indicator (development or production)
+
+---
+
+### 🛡️ Data Sharing Consent
+
+No data is sent to SMEPay unless the customer explicitly selects the SMEPay payment option at checkout and places an order.
 
 ---
 
 ### 🔄 When Data Is Sent
 
-1. When the user selects **SMEPay** at checkout and the order is created
+1. When the user selects **SMEPay** at checkout and the order is created  
 2. After payment, to confirm successful payment via the validate endpoint
 
 ---
 
 ### ⚙️ Why We Send This Data
 
-- To generate a **transaction-specific UPI QR code**
-- To **confirm payment** and update the order status in WooCommerce
-- To ensure secure, authenticated communication linked to your store
+- To generate a **transaction-specific UPI QR code**  
+- To **confirm payment** and update order status in WooCommerce  
+- To ensure secure, authenticated communication linked to your store  
+- If the SMEPay service is temporarily unavailable, customers can select an alternative payment method configured in your WooCommerce store.
 
 ---
 
 ### 🧭 Service Provider Details
 
-**SMEPay by Typof Technologies**
-- [Terms of Service](https://smepay.io/tnc)
-- [Privacy Policy](https://smepay.io/privacy-policy)
+This plugin interacts with the following SMEPay-hosted domains:  
+- `typof.com`, `typof.in` – API endpoints  
+- `typof.co` – QR widget script (`checkout.js`)
 
+**Service Provider: SMEPay by Typof Technologies**  
+- [Terms of Service](https://smepay.io/tnc)  
+- [Privacy Policy](https://smepay.io/privacy-policy)
 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release of SMEPay for WooCommerce plugin.
-* Added UPI QR code payment functionality.
-* Integrated with WooCommerce payment system.
+* Initial release of SMEPay for WooCommerce plugin.  
+* Added UPI QR code payment functionality.  
+* Integrated with WooCommerce payment system.  
 * Customizable settings for store owners.
 
 == Upgrade Notice ==
