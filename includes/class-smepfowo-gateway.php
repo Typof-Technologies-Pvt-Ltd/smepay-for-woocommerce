@@ -328,6 +328,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Process payment
      */
     public function process_payment( $order_id ) {
+        // Ensure the gateway is still available
+        if ( ! $this->is_available() ) {
+            wc_add_notice( __( 'Payment method is currently unavailable. Please choose another method.', 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
+        }
+        
         $checkout_layout = $this->get_checkout_layout();
 
         // Verify nonce only for classic checkout (non-block)
@@ -503,6 +509,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( $order->get_payment_method() !== $this->id ) {
             return;
         }
+
+        // ✅ Check if gateway is currently available
+        if ( ! $this->is_available() ) {
+            return;
+        }
+
 
         // 🔐 Only now proceed to validate via SMEPay API
         $token = $this->get_access_token();
