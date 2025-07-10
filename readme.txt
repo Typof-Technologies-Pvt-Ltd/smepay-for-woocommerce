@@ -1,5 +1,5 @@
 === SMEPay for WooCommerce ===
-Contributors: smepay, upnrunn, kishores
+Contributors: smepay, upnrunn
 Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7

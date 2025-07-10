@@ -499,6 +499,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return;
         }
 
+        // 🚫 Abort if this order was not paid using SMEPay
+        if ( $order->get_payment_method() !== $this->id ) {
+            return;
+        }
+
+        // 🔐 Only now proceed to validate via SMEPay API
         $token = $this->get_access_token();
         if ( ! $token ) {
             return;
