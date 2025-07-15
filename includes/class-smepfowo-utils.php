@@ -17,19 +17,23 @@ trait SMEPFOWO_Utils {
 	    $layout_type = 'unknown';
 
 	    if ($checkout_page_id && ($page = get_post($checkout_page_id)) instanceof WP_Post) {
-	        
-	        // Explicitly check for blocks
-	        $has_blocks = has_blocks($page->post_content);  // Ensure we're passing post content
+	        $content = $page->post_content;
 
-	        // Explicitly check for shortcode presence
-	        $has_shortcode = has_shortcode($page->post_content, 'woocommerce_checkout');
+	        // Check for Gutenberg blocks
+	        $has_blocks = has_blocks($content);
 
-	        // Determine layout type based on blocks and shortcode
-	        if ($has_blocks && $has_shortcode) {
+	        // Check for classic shortcode
+	        $has_shortcode = has_shortcode($content, 'woocommerce_checkout');
+
+	        // Check for the classic-shortcode block wrapper
+	        $has_shortcode_block = strpos($content, '<!-- wp:woocommerce/classic-shortcode') !== false
+	            && strpos($content, '"shortcode":"checkout"') !== false;
+
+	        if (($has_blocks && $has_shortcode) || ($has_blocks && $has_shortcode_block)) {
 	            $layout_type = 'block+shortcode';
 	        } elseif ($has_blocks) {
 	            $layout_type = 'block';
-	        } elseif ($has_shortcode) {
+	        } elseif ($has_shortcode || $has_shortcode_block) {
 	            $layout_type = 'classic';
 	        }
 	    }
@@ -39,5 +43,6 @@ trait SMEPFOWO_Utils {
 	        'layout' => $layout_type,
 	    ];
 	}
+
 
 }
