@@ -199,7 +199,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Load the remote SMEPay widget
         wp_enqueue_script(
             'smepfowo-checkout',
-            'https://typof.co/smepay/checkout.js',
+            'https://typof.co/smepay/checkout-v2.js',
             [],
             SMEPFOWO_Plugin::VERSION,
             true
