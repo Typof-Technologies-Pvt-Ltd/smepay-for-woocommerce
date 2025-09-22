@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: SMEPay for WooCommerce
+ * Plugin Name: SMEPay: UPI Gateway for WooCommerce
  * Plugin URI:  https://smepay.io
  * Description: Accept UPI payments via SMEPay with QR code widget on your WooCommerce website.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      SMEPay
  * Author URI:  https://profiles.wordpress.org/smepay
  * Text Domain: smepay-for-woocommerce
@@ -28,7 +28,7 @@ class SMEPFOWO_Plugin {
 
 
     // Define plugin version
-    const VERSION = '1.0.0';
+    const VERSION = '1.0.1';
 
     /**
      * @var SMEPFOWO_Plugin|null Holds the singleton instance.

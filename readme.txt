@@ -1,20 +1,20 @@
-=== SMEPay for WooCommerce ===
+=== SMEPay: UPI Gateway for WooCommerce ===
 Contributors: smepay, upnrunn
 Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 Requires PHP: 7.0
 Requires Plugins: woocommerce
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-SMEPay for WooCommerce is a WordPress plugin that enables WooCommerce stores to accept UPI payments via SMEPay.
+SMEPay: UPI Gateway for WooCommerce is a WordPress plugin that enables WooCommerce stores to accept UPI payments via SMEPay.
 
 == Description ==
 
-SMEPay for WooCommerce is a WordPress plugin built specifically for Indian WooCommerce stores to accept payments via UPI QR codes. With SMEPay, customers can scan a QR code at checkout to make instant payments using popular UPI apps like Google Pay, PhonePe, or Paytm. The plugin is easy to install, configure, and fully compatible with the latest WooCommerce versions.
+SMEPay: UPI Gateway for WooCommerce is a WordPress plugin built specifically for Indian WooCommerce stores to accept payments via UPI QR codes. With SMEPay, customers can scan a QR code at checkout to make instant payments using popular UPI apps like Google Pay, PhonePe, or Paytm. The plugin is easy to install, configure, and fully compatible with the latest WooCommerce versions.
 
 ### Features:
 - **UPI Payments Integration**: Accept UPI payments via QR code.
@@ -126,6 +126,10 @@ This plugin interacts with the following SMEPay-hosted domains:
 - [Privacy Policy](https://smepay.io/privacy-policy)
 
 == Changelog ==
+
+= 1.0.1 =
+* Added patches for conflict with other payment gateways.
+* Fixed issues for block based shortcode    
 
 = 1.0.0 =
 * Initial release of SMEPay for WooCommerce plugin.  
