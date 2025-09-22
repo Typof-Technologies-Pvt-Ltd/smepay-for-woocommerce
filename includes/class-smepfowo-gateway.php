@@ -90,8 +90,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      */
     private function get_api_base_url() {
         return ( $this->mode === 'development' )
-            ? 'https://apps.typof.in/api/'
-            : 'https://apps.typof.com/api/';
+            ? 'https://staging.smepay.in/api/wiz/'
+            : 'https://extranet.smepay.in/api/wiz/';
     }
 
     /**
@@ -524,7 +524,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $data = [
             'client_id' => $this->client_id,
-            'amount'    => $order->get_total(),
+            'amount'    => (float)$order->get_total(),
             'slug'      => $order->get_meta( '_smepfowo_slug' ),
         ];
 
@@ -547,7 +547,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $decoded_response = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        if ( isset( $decoded_response['status'], $decoded_response['payment_status'] ) && $decoded_response['status'] && 'paid' === $decoded_response['payment_status'] ) {
+        if ( isset( $decoded_response['status'], $decoded_response['payment_status'] ) && $decoded_response['status'] && 'SUCCESS' === $decoded_response['payment_status'] ) {
             if ( $order->get_status() !== 'completed' ) {
                 $order->payment_complete();
                 $order->add_order_note( __( 'Payment confirmed via SMEPay.', 'smepay-for-woocommerce' ) );
