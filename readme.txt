@@ -4,7 +4,7 @@ Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 Requires PHP: 7.0
 Requires Plugins: woocommerce
 License: GPLv3 or later
@@ -118,14 +118,18 @@ No data is sent to SMEPay unless the customer explicitly selects the SMEPay paym
 ### 🧭 Service Provider Details
 
 This plugin interacts with the following SMEPay-hosted domains:  
-- `typof.com`, `typof.in` – API endpoints  
-- `typof.co` – QR widget script (`checkout.js`)
+- `smepay.in`, `typof.co/` – API endpoints  
+- `typof.co` – QR widget script (`checkout-v2.js`)
 
 **Service Provider: SMEPay by Typof Technologies**  
 - [Terms of Service](https://smepay.io/tnc)  
 - [Privacy Policy](https://smepay.io/privacy-policy)
 
 == Changelog ==
+
+= 1.0.2 =
+* Added new api endpoints.
+* Fixed correct status and type casting for new API
 
 = 1.0.1 =
 * Added patches for conflict with other payment gateways.
@@ -138,6 +142,12 @@ This plugin interacts with the following SMEPay-hosted domains:
 * Customizable settings for store owners.
 
 == Upgrade Notice ==
+
+= 1.0.2 =
+* Critical update: Updated API endpoints and improved order status handling. Recommended for all users to ensure compatibility with latest SMEPay API.
+
+= 1.0.1 =
+* Compatibility patch: Resolved conflicts with other payment gateways and fixed issues with block-based checkout. Update if you're using WooCommerce blocks.
 
 = 1.0.0 =
 * First version released. No previous version to upgrade from.
