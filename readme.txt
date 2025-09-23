@@ -67,10 +67,10 @@ This plugin connects to the SMEPay platform, a third-party UPI payment service p
 The plugin uses different endpoints depending on your selected mode:
 
 - **Development Mode** (`mode = development`):  
-  Base URL: `https://apps.typof.in/api/…`
+  Base URL: `https://staging.smepay.in/api/wiz/…`
 
 - **Production Mode** (`mode = production`):  
-  Base URL: `https://apps.typof.com/api/…`
+  Base URL: `https://extranet.smepay.in/api/wiz/…`
 
 #### Endpoints Used:
 - `/external/auth` – Authenticate WooCommerce store with SMEPay  
@@ -78,7 +78,7 @@ The plugin uses different endpoints depending on your selected mode:
 - `/external/validate-order` – Validate payment status
 
 #### Frontend Widget Script:
-- `https://typof.co/smepay/checkout.js` – This script loads a React-based frontend app that renders the UPI QR code at checkout. It enables customers to scan and pay using their UPI app. It only uses data required to generate and display the QR code for the current WooCommerce order. It does **not** track users, store cookies, or collect personal data outside the transaction context.
+- `https://typof.co/smepay/checkout-v2.js` – This script loads a React-based frontend app that renders the UPI QR code at checkout. It enables customers to scan and pay using their UPI app. It only uses data required to generate and display the QR code for the current WooCommerce order. It does **not** track users, store cookies, or collect personal data outside the transaction context.
 
 ---
 
@@ -118,7 +118,7 @@ No data is sent to SMEPay unless the customer explicitly selects the SMEPay paym
 ### 🧭 Service Provider Details
 
 This plugin interacts with the following SMEPay-hosted domains:  
-- `smepay.in`, `typof.co/` – API endpoints  
+- `smepay.in`, `typof.co` – API endpoints  
 - `typof.co` – QR widget script (`checkout-v2.js`)
 
 **Service Provider: SMEPay by Typof Technologies**  
