@@ -44,5 +44,31 @@ trait SMEPFOWO_Utils {
 	    ];
 	}
 
+	/**
+     * Format partial payment email message.
+     *
+     * @param float $paid_amount Amount already paid.
+     * @param float $total_amount Total order amount.
+     * @param string $currency_symbol Currency symbol, e.g. '$' or '₹'.
+     *
+     * @return string
+     */
+    public function smepfowo_format_partial_payment_message( $paid_amount, $total_amount, $currency_symbol = '₹' ) {
+        $remaining = $total_amount - $paid_amount;
+        $message = sprintf(
+            /* translators: 1: paid amount with currency, 2: total amount with currency, 3: remaining amount with currency */
+            __( 'You have paid %1$s out of %2$s. Remaining %3$s is to be paid at COD.', 'smepay-for-woocommerce' ),
+            $currency_symbol . number_format_i18n( $paid_amount, 2 ),
+            $currency_symbol . number_format_i18n( $total_amount, 2 ),
+            $currency_symbol . number_format_i18n( $remaining, 2 )
+        );
 
+        // Log the message for debugging
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            $logger = wc_get_logger();
+            $logger->debug( 'Partial payment message: ' . $message, [ 'source' => 'smepfowo_email' ] );
+        }
+
+        return $message;
+    }
 }

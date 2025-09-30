@@ -48,7 +48,7 @@ class SMEPFOWO_Plugin {
         add_filter( 'woocommerce_payment_gateways', array( __CLASS__, 'add_gateway' ) );
 
         // Register WooCommerce Blocks support.
-        add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'smepfowo_register_block_gateway' ) );
+        add_action( 'woocommerce_blocks_loaded', array( __CLASS__, 'smepfowo_register_block_gateway' ), 20 );
 
         // Admin SSL warning.
         add_action( 'admin_notices', array( __CLASS__, 'check_ssl_requirement' ) );
@@ -84,6 +84,7 @@ class SMEPFOWO_Plugin {
 
         if ( ( $hide_for_non_admin_users === 'yes' && current_user_can( 'manage_options' ) ) || $hide_for_non_admin_users === 'no' ) {
             $gateways[] = 'SMEPFOWO_Gateway';
+            $gateways[] = 'SMEPFOWO_Partial_COD_Gateway'; // ✅ Add this line
         }
 
         return $gateways;
@@ -99,6 +100,7 @@ class SMEPFOWO_Plugin {
 
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
             require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-gateway.php';
+            require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-partial-cod-gateway.php';
         }
     }
 
@@ -144,11 +146,13 @@ class SMEPFOWO_Plugin {
     public static function smepfowo_register_block_gateway() {
         if ( class_exists( 'Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType' ) ) {
             require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/blocks/class-smepfowo-gateway-blocks-support.php';
+            require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/blocks/class-smepfowo-partial-cod-gateway-blocks-support.php';
 
             add_action(
                 'woocommerce_blocks_payment_method_type_registration',
                 function ( Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry $payment_method_registry ) {
                     $payment_method_registry->register( new SMEPFOWO_Gateway_Blocks_Support() );
+                    $payment_method_registry->register( new SMEPFOWO_Partial_COD_Gateway_Blocks_Support() );
                 }
             );
         }

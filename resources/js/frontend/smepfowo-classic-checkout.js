@@ -3,11 +3,13 @@ const { __ } = wp.i18n;
 jQuery(function ($) {
   const $form = $('form.checkout');
 
-  $form.on('checkout_place_order_smepfowo', function (e) {
+  $form.on('checkout_place_order_smepfowo checkout_place_order_smepfowo_partial_cod', function (e) {
     e.preventDefault();
 
     const selectedMethod = $('input[name="payment_method"]:checked').val();
-    if (selectedMethod !== 'smepfowo') return true;
+    if (!['smepfowo', 'smepfowo_partial_cod'].includes(selectedMethod)) {
+        return true;
+    }
 
     $form.block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
 

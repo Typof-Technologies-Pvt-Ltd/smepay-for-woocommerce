@@ -1,90 +1,138 @@
-// Destructure required WordPress packages
-const { createElement: smepfowoEl, Fragment } = window.wp.element;
-const { __ } = window.wp.i18n;
+(() => {
+  // Exit if dependencies are missing or already initialized
+  if (
+    !window.wp?.element ||
+    !window.wp.i18n ||
+    !window.smepfowoCheckoutData ||
+    !window.wc?.wcBlocksRegistry ||
+    window.smepfowoBlocksInit
+  ) {
+    return;
+  }
 
-// Get localized logo from PHP
-const smepfowoLogo = window.smepfowoCheckoutData?.imgUrl || '';
+  // Prevent re-initialization
+  window.smepfowoBlocksInit = true;
 
-// Translatable label and description
-const smepfowoLabelText = __('UPI Pay', 'smepay-for-woocommerce');
-const smepfowoContent = () => __('Secure by SMEPay.', 'smepay-for-woocommerce');
+  // Destructure commonly used WP functions
+  const { createElement: el, Fragment } = window.wp.element;
+  const { __ } = window.wp.i18n;
 
-// Get URL parameters
-const urlParams = new URLSearchParams(window.location.search);
-const smepfowoSlug = urlParams.get('smepfowo_slug');
-const smepfowoRedirectUrl = urlParams.get('redirect_url');
+  // Get SMEPay checkout data and URL parameters
+  const smepfowoLogo = window.smepfowoCheckoutData.imgUrl || '';
+  const urlParams = new URLSearchParams(window.location.search);
+  const smepfowoSlug = urlParams.get('smepfowo_slug');
+  const smepfowoRedirectUrl = urlParams.get('redirect_url') || window.location.href;
+  const smepfowoOrderPaid = !!window.smepfowoCheckoutData.orderPaid;
 
-// Register SMEPay payment method for block-based checkout
-const smepfowoBlockGateway = {
-    name: 'smepfowo',
-    label: smepfowoEl(Fragment, null,
-        smepfowoLabelText,
-        smepfowoEl('img', {
-            src: smepfowoLogo,
-            alt: __('SMEPay Logo', 'smepay-for-woocommerce'),
-            style: {
-                height: '20px',
-                marginLeft: '8px',
-                verticalAlign: 'middle',
-                display: 'inline-block',
-            }
+  // Supported gateways
+  const supportedMethods = ['smepfowo', 'smepfowo_partial_cod'];
+
+  // Helpers to fetch method data
+  const getLabelText = (methodId) => {
+    const methodData = window.wc?.wcSettings?.getPaymentMethodData?.(methodId);
+    console.log(`wcSettings data for ${methodId}:`, methodData);
+    return methodData?.title || __('Pay with UPI', 'smepay-for-woocommerce');
+  };
+
+  const getDescriptionContent = (methodId) => {
+    const methodData = window.wc?.wcSettings?.getPaymentMethodData?.(methodId);
+    return methodData?.description || __('Securely powered by SMEPay.', 'smepay-for-woocommerce');
+  };
+
+  // Register payment methods for each gateway
+  supportedMethods.forEach((methodId) => {
+    const title = getLabelText(methodId);
+    const description = getDescriptionContent(methodId);
+
+    console.log(`Registering method: ${methodId}`);
+    console.log(`Title: ${title}`);
+    console.log(`Description: ${description}`);
+
+    window.wc.wcBlocksRegistry.registerPaymentMethod({
+      name: methodId,
+      label: el(
+        Fragment,
+        null,
+        title,
+        el('img', {
+          src: smepfowoLogo,
+          alt: __('SMEPay Logo', 'smepay-for-woocommerce'),
+          style: {
+            height: '20px',
+            marginLeft: '8px',
+            verticalAlign: 'middle',
+            display: 'inline-block',
+          },
         })
-    ),
-    content: smepfowoEl('div', null, smepfowoContent()),
-    edit: smepfowoEl('div', null, smepfowoContent()),
-    canMakePayment: () => true,
-    ariaLabel: smepfowoLabelText,
-    supports: {
+      ),
+      content: el('div', null, description),
+      edit: el('div', null, description),
+      canMakePayment: () => true,
+      ariaLabel: title,
+      supports: {
         features: ['products'],
-    },
-};
+      },
+    });
+  });
 
-// Register payment method with WooCommerce Blocks
-window.wc.wcBlocksRegistry.registerPaymentMethod(smepfowoBlockGateway);
+  // Handle widget triggering
+  let widgetTriggerTimeout = null;
 
-// Determine if order was already paid
-const smepfowoOrderPaid = window.smepfowoCheckoutData?.orderPaid || false;
-
-// Trigger SMEPay widget
-const smepfowoTriggerPaymentWidget = () => {
+  const smepfowoTriggerPaymentWidget = () => {
     if (smepfowoOrderPaid) {
-        console.log(__('Order is already paid. SMEPay widget will not be triggered.', 'smepay-for-woocommerce'));
-        return;
+      console.log(__('Order is already paid. SMEPay widget will not be triggered.', 'smepay-for-woocommerce'));
+      return;
     }
 
-    if (smepfowoSlug) {
-        window.smepayCheckout({
-            slug: smepfowoSlug,
-            onSuccess: function () {
-                window.location.href = smepfowoRedirectUrl + `&smepfowo_slug=${smepfowoSlug}`;
-            },
-            onFailure: function () {
-                console.warn(__('SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
-            }
-        });
+    if (smepfowoSlug && typeof window.smepayCheckout === 'function') {
+      window.smepayCheckout({
+        slug: smepfowoSlug,
+        onSuccess: () => {
+          window.location.href = smepfowoRedirectUrl.includes('?')
+            ? `${smepfowoRedirectUrl}&smepfowo_slug=${smepfowoSlug}`
+            : `${smepfowoRedirectUrl}?smepfowo_slug=${smepfowoSlug}`;
+        },
+        onFailure: () => {
+          console.warn(__('SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
+        },
+      });
     } else {
-        console.log(__('SMEPay slug missing. Widget will not trigger.', 'smepay-for-woocommerce'));
+      console.log(__('SMEPay slug missing or checkout function unavailable.', 'smepay-for-woocommerce'));
     }
-};
+  };
 
-// Auto-select payment method and trigger widget on page load
-window.addEventListener('load', () => {
-    if (smepfowoSlug) {
-        const input = document.querySelector('input[name="payment_method"][value="smepfowo"]');
-        if (input) {
-            input.checked = true;
-            input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-        setTimeout(smepfowoTriggerPaymentWidget, 500);
+  const debounceTrigger = () => {
+    clearTimeout(widgetTriggerTimeout);
+    widgetTriggerTimeout = setTimeout(smepfowoTriggerPaymentWidget, 300);
+  };
+
+  // Auto-select method and trigger widget on load
+  window.addEventListener('load', () => {
+    if (!smepfowoSlug) return;
+
+    const selectedMethod = supportedMethods.find((method) =>
+      document.querySelector(`input[name="payment_method"][value="${method}"]`)
+    );
+
+    if (selectedMethod) {
+      const input = document.querySelector(`input[name="payment_method"][value="${selectedMethod}"]`);
+      if (input) {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
     }
-});
 
-// Watch for user selection of SMEPay in the payment options
-document.addEventListener('change', (e) => {
+    debounceTrigger();
+  });
+
+  // Re-trigger widget when payment method is changed
+  document.addEventListener('change', (e) => {
+    const input = e.target;
     if (
-        e.target &&
-        e.target.matches('input[name="payment_method"][value="smepfowo"]')
+      input?.matches('input[name="payment_method"]') &&
+      supportedMethods.includes(input.value)
     ) {
-        smepfowoTriggerPaymentWidget();
+      debounceTrigger();
     }
-});
+  });
+})();
