@@ -88,12 +88,10 @@ trait SMEPFOWO_Utils {
 	 * @return void Outputs JSON and terminates execution via wp_send_json_*()
 	 */
     public function ajax_check_smepfowo_order_status() {
-	    error_log('[SMEPFOWO] ajax_check_smepfowo_order_status() called');
 
     	check_ajax_referer( 'smepfowo_nonce_action', 'nonce' );
 
     	$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
-    	error_log('[SMEPFOWO] Order ID received: ' . $order_id);
 
 	    if ( ! $order_id ) {
 	        wp_send_json_error( [ 'message' => 'Invalid order ID.' ] );
@@ -104,11 +102,7 @@ trait SMEPFOWO_Utils {
 	        wp_send_json_error( [ 'message' => 'Order not found.' ] );
 	    }
 
-	    error_log( '[SMEPFOWO] smepfowo_check_order_status() start: ' . $order_id );
 	    $result = $this->smepfowo_check_order_status( $order_id );
-	   	// Log the raw result
-    	error_log('[SMEPFOWO] smepfowo_check_order_status() returned: ' . print_r( $result, true ));
-	    error_log( '[SMEPFOWO] smepfowo_check_order_status() end: ' . $order_id );
 
 	    if ( $result && isset( $result['payment_status'] ) ) {
 	        $status = $result['payment_status'];
@@ -142,7 +136,4 @@ trait SMEPFOWO_Utils {
 
 	    wp_send_json_error( [ 'message' => 'Unable to retrieve payment status.' ] );
 	}
-
-
-
 }

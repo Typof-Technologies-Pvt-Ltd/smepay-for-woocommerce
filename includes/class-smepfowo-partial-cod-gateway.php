@@ -160,9 +160,6 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             ],
         ];
 
-        // Log the request payload for debugging
-        error_log( 'SMEPay Partial COD - Request Payload: ' . json_encode( $payload ) );
-
         $response = wp_remote_post(
             $this->get_api_base_url() . 'external/order/create',
             [
@@ -177,24 +174,18 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         // Check for errors in the response
         if ( is_wp_error( $response ) ) {
-            error_log( 'SMEPay Partial COD - API Request Error: ' . $response->get_error_message() );
             return null;
         }
 
         // Log the HTTP response code
         $response_code = wp_remote_retrieve_response_code( $response );
-        error_log( 'SMEPay Partial COD - API Response Code: ' . $response_code );
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-        // Log the response body
-        error_log( 'SMEPay Partial COD - API Response: ' . json_encode( $body ) );
 
         // ✅ Save the SMEPay order ID (required for polling)
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
             $order->save();
-            error_log( 'SMEPay Partial COD - Saved _smepfowo_order_id: ' . $body['order_id'] );
         }
 
 
@@ -205,7 +196,6 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             $order->save();
             return $slug;
         } else {
-            error_log( 'SMEPay Partial COD - Missing order_slug in response' );
             return null;
         }
     }
@@ -314,13 +304,13 @@ function smepfowo_custom_thankyou_text( $thank_you_text, $order ) {
     $total        = (float) $order->get_total();
     $remaining    = $total - $partial_paid;
 
-    // Fallback if data missing
     if ( $partial_paid <= 0 || $remaining <= 0 ) {
+        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
         return __( 'Thank you. Your order has been received.', 'woocommerce' );
     }
 
-    // Build plain text message (no HTML)
     $custom_text = sprintf(
+        // translators: 1: paid amount (formatted), 2: remaining amount (formatted)
         __( 'Thank you! You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery. We will notify you when your order is out for delivery.', 'smepay-for-woocommerce' ),
         wc_price( $partial_paid ),
         wc_price( $remaining )
@@ -354,13 +344,17 @@ function smepfowo_partial_cod_email_instructions( $order, $sent_to_admin, $plain
     }
 
     $message = sprintf(
+        // translators: %1$s is the paid amount, %2$s is the remaining amount
         __( 'You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery.', 'smepay-for-woocommerce' ),
         wc_price( $partial_paid ),
         wc_price( $remaining )
     );
 
+
+
+
     // ✅ Log the email message
-    error_log( '[SMEPay Email Instructions] Order #' . $order->get_id() . ' - Message: ' . strip_tags( $message ) );
+    // error_log( '[SMEPay Email Instructions] Order #' . $order->get_id() . ' - Message: ' . strip_tags( $message ) );
 
     // Output message
     if ( $plain_text ) {

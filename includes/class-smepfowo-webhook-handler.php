@@ -25,7 +25,6 @@ class SMEPFOWO_Webhook_Handler {
 	 */
 	public function handle_webhook(WP_REST_Request $request) {
 		$body = $request->get_json_params();
-		error_log('[SMEPFOWO Webhook] Received: ' . print_r($body, true));
 
 		if (empty($body['ref_id']) || empty($body['status'])) {
 			return new WP_REST_Response(['error' => 'Missing required fields'], 400);
