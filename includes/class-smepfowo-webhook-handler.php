@@ -75,17 +75,19 @@ class SMEPFOWO_Webhook_Handler {
 				$amount_left    = $total_amount - $partial_amount;
 
 				$order->update_status('processing', sprintf(
-					__('Partial payment of %s received via SMEPay. %s remaining to be collected on delivery.', 'smepay-for-woocommerce'),
-					wc_price($partial_amount),
-					wc_price($amount_left)
+					// translators: %1$s is the paid amount, %2$s is the remaining amount
+				    __('Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery.', 'smepay-for-woocommerce'),
+				    wc_price($partial_amount),
+				    wc_price($amount_left)
 				));
+
 
 				$order->add_order_note(sprintf(
-					__('Partial payment validated: %s paid via SMEPay. %s remaining for COD.', 'smepay-for-woocommerce'),
-					wc_price($partial_amount),
-					wc_price($amount_left)
+					// translators: %1$s is the paid amount, %2$s is the remaining amount
+				    __('Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD.', 'smepay-for-woocommerce'),
+				    wc_price($partial_amount),
+				    wc_price($amount_left)
 				));
-
 				return new WP_REST_Response(['message' => 'Order marked as partially paid'], 200);
 			} else {
 				if ($order->get_status() !== 'completed') {

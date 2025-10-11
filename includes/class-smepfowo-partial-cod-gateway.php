@@ -261,13 +261,15 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         ) {
             if ( $order->get_status() !== 'processing' ) {
                 $order->update_status( 'processing', sprintf(
-                    __( 'Partial payment of %s received via SMEPay. %s remaining to be collected on delivery.', 'smepay-for-woocommerce' ),
+                    // translators: %1$s is the paid amount, %2$s is the remaining amount
+                    __( 'Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery.', 'smepay-for-woocommerce' ),
                     wc_price( $partial_amount ),
                     wc_price( $amount_left )
                 ) );
 
                 $order->add_order_note( sprintf(
-                    __( 'Partial payment validated: %s paid via SMEPay. %s remaining for COD.', 'smepay-for-woocommerce' ),
+                    // translators: %1$s is the paid amount, %2$s is the remaining amount
+                    __( 'Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD.', 'smepay-for-woocommerce' ),
                     wc_price( $partial_amount ),
                     wc_price( $amount_left )
                 ) );
@@ -349,7 +351,7 @@ function smepfowo_partial_cod_email_instructions( $order, $sent_to_admin, $plain
 
     // Output message
     if ( $plain_text ) {
-        echo "\n" . strip_tags( $message ) . "\n";
+        echo "\n" . esc_html( wp_strip_all_tags( $message ) ) . "\n";
     } else {
         echo '<p>' . esc_html( $message ) . '</p>';
     }
