@@ -13,7 +13,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
     public function __construct() {
-        // ✅ Important: set ID before parent constructor
         $this->id = 'smepfowo_partial_cod';
 
         // Call parent constructor to load base settings
@@ -113,7 +112,6 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
                 [
                     'key'           => $order->get_order_key(),
                     'redirect_url'  => $order->get_checkout_order_received_url(),
-                    //'smepfowo_slug' => $slug,
                     'smepfowo_partial_cod_slug' => $slug,
                     'order_id'      => $order_id, 
                 ],
@@ -123,7 +121,6 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         return [
             'result'        => 'success',
-            //'smepfowo_slug' => $slug,
             'smepfowo_partial_cod_slug' => $slug,
             'order_id'      => $order_id,
             'order_key'     => $order->get_order_key(),
@@ -357,5 +354,3 @@ function smepfowo_partial_cod_email_instructions( $order, $sent_to_admin, $plain
         echo '<p>' . esc_html( $message ) . '</p>';
     }
 }
-
-

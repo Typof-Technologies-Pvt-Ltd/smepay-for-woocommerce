@@ -84,7 +84,7 @@ class SMEPFOWO_Plugin {
 
         if ( ( $hide_for_non_admin_users === 'yes' && current_user_can( 'manage_options' ) ) || $hide_for_non_admin_users === 'no' ) {
             $gateways[] = 'SMEPFOWO_Gateway';
-            $gateways[] = 'SMEPFOWO_Partial_COD_Gateway'; // ✅ Add this line
+            $gateways[] = 'SMEPFOWO_Partial_COD_Gateway';
         }
 
         return $gateways;

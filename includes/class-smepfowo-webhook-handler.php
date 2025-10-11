@@ -1,4 +1,15 @@
 <?php
+/**
+ * SMEPFOWO_Webhook_Handler class
+ *
+ * @author    SMEPay <support@smepay.io>
+ * @package   WooCommerce SMEPay Payments Gateway
+ * @since     1.0.2
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 class SMEPFOWO_Webhook_Handler {
 
