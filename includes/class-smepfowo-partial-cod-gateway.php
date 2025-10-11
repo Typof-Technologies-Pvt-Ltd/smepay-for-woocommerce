@@ -350,12 +350,6 @@ function smepfowo_partial_cod_email_instructions( $order, $sent_to_admin, $plain
         wc_price( $remaining )
     );
 
-
-
-
-    // ✅ Log the email message
-    // error_log( '[SMEPay Email Instructions] Order #' . $order->get_id() . ' - Message: ' . strip_tags( $message ) );
-
     // Output message
     if ( $plain_text ) {
         echo "\n" . strip_tags( $message ) . "\n";

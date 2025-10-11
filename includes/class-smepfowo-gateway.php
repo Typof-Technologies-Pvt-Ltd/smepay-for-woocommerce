@@ -505,21 +505,15 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $new_order_id = "{$order_id}-{$timestamp}-{$random}";
         $existing_order_id = $order->get_meta( '_smepfowo_order_id' );
 
-        error_log( $log_prefix . "Generated new_order_id: {$new_order_id}" );
-
         // Prevent duplicate creation
         if ( $existing_order_id === $new_order_id ) {
-            error_log( $log_prefix . "Duplicate order_id detected. Skipping creation." );
             return null;
         }
 
         $token = $this->get_access_token();
         if ( ! $token ) {
-            error_log( $log_prefix . "Failed to retrieve access token." );
             return null;
         }
-
-        error_log( $log_prefix . "Access token retrieved: {$token}" );
 
         // Save your generated order ID before sending request
         $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
@@ -538,10 +532,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ],
         ];
 
-        error_log( $log_prefix . 'Payload: ' . wp_json_encode( $payload ) );
-
         $url = $this->get_api_base_url() . 'external/order/create';
-        error_log( $log_prefix . "Posting to URL: {$url}" );
 
         $response = wp_remote_post(
             $url,
@@ -556,7 +547,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
-            error_log( $log_prefix . 'WP Error: ' . $response->get_error_message() );
             return null;
         }
 
@@ -564,14 +554,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $raw_body    = wp_remote_retrieve_body( $response );
         $body        = json_decode( $raw_body, true );
 
-        error_log( $log_prefix . "Response Code: {$status_code}" );
-        error_log( $log_prefix . 'Raw Response Body: ' . $raw_body );
-
         // Update the meta with the real SMEPay order_id if returned
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
             $order->save();
-            error_log( $log_prefix . "Saved SMEPay order_id: {$body['order_id']}" );
         }
 
         // Save the order slug if returned
@@ -579,11 +565,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( is_string( $slug ) && $slug !== '' ) {
             $order->update_meta_data( '_smepfowo_slug', $slug );
             $order->save();
-            error_log( $log_prefix . "Order slug created: {$slug}" );
             return $slug;
         }
-
-        error_log( $log_prefix . "Failed to retrieve valid order_slug from response." );
         return null;
     }
 
@@ -629,9 +612,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        error_log( 'SMEPay Payload: ' . wp_json_encode( $payload ) );
-        error_log( 'SMEPay Response: ' . print_r( $body, true ) );
-
         if ( isset( $body['status'] ) && $body['status'] === true ) {
             return $body;
         }
@@ -646,10 +626,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * @return array|null Status response or null on failure.
      */
     public function smepfowo_check_order_status( $order_id ) {
-        error_log( 'zzzz[SMEPFOWO] smepfowo_check_order_status() triggered for Order ID: ' . $order_id );
-        $order = wc_get_order(1251);
-        error_log('[SMEPFOWO DEBUG] _smepfowo_order_id: ' . $order->get_meta('_smepfowo_order_id'));
-
 
         if ( empty( $order_id ) || empty( $this->client_id ) ) {
             return null;
@@ -665,16 +641,13 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        error_log( 'xxxx[SMEPFOWO] smepfowo_check_order_status() triggered for Order ID: ' . $order_id );
-
-
         $token = $this->get_access_token();
         if ( ! $token ) {
             return null;
         }
 
         $payload = [
-            'order_id'  => $smepfowo_order_id, // TCY7284904531103
+            'order_id'  => $smepfowo_order_id,
             'client_id' => $this->client_id, // ✅ REQUIRED by SMEPay API
         ];
 
@@ -691,14 +664,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
-            error_log( '[SMEPay Order Status] WP Error: ' . $response->get_error_message() );
             return null;
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-
-        error_log( '[SMEPay Order Status] Payload: ' . wp_json_encode( $payload ) );
-        error_log( '[SMEPay Order Status] Response: ' . print_r( $body, true ) );
 
         if ( isset( $body['status'] ) && $body['status'] === true ) {
             return $body;
@@ -733,8 +702,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        
-        error_log( 'SMEPay Response: ' . print_r( $body, true ) );
 
         return $body['access_token'] ?? null;
     }

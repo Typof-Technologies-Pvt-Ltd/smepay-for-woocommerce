@@ -47,13 +47,10 @@ final class SMEPFOWO_Partial_COD_Gateway_Blocks_Support extends AbstractPaymentM
         // Detect correct order ID from different contexts
         if ( is_checkout_pay_page() ) {
             $order_id = absint( get_query_var( 'order-pay' ) );
-            error_log( '[SMEPFOWO] order-pay page order_id: ' . $order_id );
         } elseif ( is_order_received_page() ) {
             $order_id = absint( get_query_var( 'order-received' ) );
-            error_log( '[SMEPFOWO] order-received page order_id: ' . $order_id );
         } else {
             $order_id = WC()->session ? WC()->session->get( 'order_awaiting_payment' ) : 0;
-            error_log( '[SMEPFOWO] session-based checkout order_id: ' . $order_id );
         }
 
         // If we have an order ID, try to fetch the order and meta
@@ -68,13 +65,6 @@ final class SMEPFOWO_Partial_COD_Gateway_Blocks_Support extends AbstractPaymentM
                 if ( $order->is_paid() ) {
                     $is_paid = true;
                 }
-
-                // ✅ Log info
-                error_log( '[SMEPFOWO] QR Code for order ' . $order_id . ': ' . ( $qr_code ? substr( $qr_code, 0, 40 ) . '...' : 'empty' ) );
-                error_log( '[SMEPFOWO] Payment link: ' . ( $payment_link ?: 'empty' ) );
-                error_log( '[SMEPFOWO] Is paid: ' . ( $is_paid ? 'yes' : 'no' ) );
-            } else {
-                error_log( '[SMEPFOWO] Order object could not be retrieved for ID: ' . $order_id );
             }
         }
 
