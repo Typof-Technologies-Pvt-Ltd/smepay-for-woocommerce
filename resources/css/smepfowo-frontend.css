@@ -1,0 +1,52 @@
+.smepfowo-redirect-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: sans-serif;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 0.4s ease-in-out;
+  pointer-events: none;
+}
+
+.smepfowo-redirect-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.smepfowo-redirect-message {
+  font-size: 1.2rem;
+  color: #ffffff;
+  margin-bottom: 12px;
+}
+
+.smepfowo-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: smepfowo-spin 1s linear infinite;
+}
+
+@keyframes smepfowo-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 767px) {
+  .smepfowo-qr-image {
+    display: none !important;
+  }
+}
+
+/* Hide intents block on desktop */
+@media (min-width: 768px) {
+  .smepfowo-intents-mobile-only {
+    display: none !important;
+  }
+}

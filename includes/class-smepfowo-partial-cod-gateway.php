@@ -38,9 +38,11 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         $this->init_form_fields();
         $this->init_settings();
 
+        add_action( 'wp_ajax_check_smepfowo_order_status', [ $this, 'ajax_check_smepfowo_order_status' ] );
+        add_action( 'wp_ajax_nopriv_check_smepfowo_order_status', [ $this, 'ajax_check_smepfowo_order_status' ] );
+
 
         add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_order_request' ], 10, 1 );
-
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
     }
 
@@ -77,6 +79,31 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return [ 'result' => 'failure' ];
         }
 
+        // Optional inline QR support
+        $qr_code = '';
+        $payment_link = '';
+
+        if ( $this->get_option( 'display_mode' ) === 'inline' ) {
+            $initiate = $this->smepfowo_initiate_payment( $slug );
+
+            if ( $initiate && ! empty( $initiate['qr_code'] ) ) {
+                $qr_code       = $initiate['qr_code'];
+                $payment_link  = $initiate['payment_link'] ?? '';
+                $intents = $initiate['intents'] ?? [];
+                
+                // Store for reference
+                $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
+                $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
+                $order->update_meta_data( '_smepfowo_intents', $intents );
+                $order->save();
+            } else {
+                wc_add_notice( __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' ), 'error' );
+                return [ 'result' => 'failure' ];
+            }
+        }
+
+
+
         // 🔍 Detect layout (block vs classic)
         $checkout_layout = $this->get_checkout_layout();
 
@@ -86,7 +113,9 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
                 [
                     'key'           => $order->get_order_key(),
                     'redirect_url'  => $order->get_checkout_order_received_url(),
-                    'smepfowo_slug' => $slug,
+                    //'smepfowo_slug' => $slug,
+                    'smepfowo_partial_cod_slug' => $slug,
+                    'order_id'      => $order_id, 
                 ],
                 $order->get_checkout_payment_url( false )
             )
@@ -94,11 +123,15 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         return [
             'result'        => 'success',
-            'smepfowo_slug' => $slug,
+            //'smepfowo_slug' => $slug,
+            'smepfowo_partial_cod_slug' => $slug,
             'order_id'      => $order_id,
             'order_key'     => $order->get_order_key(),
             'redirect_url'  => $order->get_checkout_order_received_url(),
             'redirect'      => $redirect_url, // 🧠 Empty in classic layout, which triggers popup
+            'qr_code'       => $qr_code,
+            'payment_link'  => $payment_link,
+            'intents'       => $intents,
         ];
     }
 
@@ -119,7 +152,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             'client_id'        => $this->client_id,
             'amount'           => (string) $amount,
             'order_id'         => $new_order_id,
-            'callback_url'     => $order->get_checkout_order_received_url(),
+            'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
             'customer_details' => [
                 'email'  => $order->get_billing_email(),
                 'mobile' => $order->get_billing_phone(),
@@ -156,6 +189,14 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         // Log the response body
         error_log( 'SMEPay Partial COD - API Response: ' . json_encode( $body ) );
+
+        // ✅ Save the SMEPay order ID (required for polling)
+        if ( ! empty( $body['order_id'] ) ) {
+            $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
+            $order->save();
+            error_log( 'SMEPay Partial COD - Saved _smepfowo_order_id: ' . $body['order_id'] );
+        }
+
 
         // Check if order_slug exists in the response
         $slug = $body['order_slug'] ?? null;

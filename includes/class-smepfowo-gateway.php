@@ -29,6 +29,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     protected $client_secret;
 
     protected $mode;
+    protected $display_mode;
 
     /**
      * Constructor
@@ -61,11 +62,16 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $this->description             = $this->get_option( 'description' );
         $this->instructions            = $this->get_option( 'instructions', $this->description );
         $this->hide_for_non_admin_users = $this->get_option( 'hide_for_non_admin_users' );
+        $this->display_mode = $this->get_option( 'display_mode', 'wizard' );
 
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
         add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_order_request' ], 10, 1 );
         add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
         add_action( 'woocommerce_review_order_before_submit', [ $this, 'add_nonce_to_checkout' ] );
+
+        add_action( 'wp_ajax_check_smepfowo_order_status', [ $this, 'ajax_check_smepfowo_order_status' ] );
+        add_action( 'wp_ajax_nopriv_check_smepfowo_order_status', [ $this, 'ajax_check_smepfowo_order_status' ] );
+
 
         if ( is_admin() && 'development' === $this->mode ) {
             add_action( 'admin_notices', function() {
@@ -87,15 +93,23 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     }
 
     /**
-     * Get base API URL depending on mode
+     * Get base API URL depending on mode and display mode.
      *
      * @return string
      */
     protected function get_api_base_url() {
-        return ( $this->mode === 'development' )
-            ? 'https://staging.smepay.in/api/wiz/'
-            : 'https://extranet.smepay.in/api/wiz/';
+        $base = ( $this->mode === 'development' )
+            ? 'https://staging.smepay.in/api/'
+            : 'https://extranet.smepay.in/api/';
+
+        // If display mode is wizard, append 'wiz/' to the base URL
+        if ( $this->display_mode === 'wizard' ) {
+            $base .= 'wiz/';
+        }
+
+        return $base;
     }
+
 
     /**
      * Get the current mode of the gateway.
@@ -199,24 +213,58 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return;
         }
 
-        // Load the remote SMEPay widget
-        wp_enqueue_script(
-            'smepfowo-checkout',
-            'https://typof.co/smepay/checkout-v2.js',
-            [],
-            SMEPFOWO_Plugin::VERSION,
-            true
-        );
+        // Load the remote SMEPay widget ONLY in wizard mode
+        if ( $this->display_mode === 'wizard' ) {
+            wp_enqueue_script(
+                'smepfowo-checkout',
+                'https://typof.co/smepay/checkout-v2.js',
+                [],
+                SMEPFOWO_Plugin::VERSION,
+                true
+            );
+        }
 
         // Do not proceed if plugin is disabled or missing credentials
         if ( 'no' === $this->enabled || empty( $this->client_id ) || empty( $this->client_secret ) ) {
             return;
         }
 
+        // ✅ Enqueue CSS here
+        wp_enqueue_style(
+            'smepfowo-frontend',
+            trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/css/smepfowo-frontend.css',
+            [],
+            SMEPFOWO_Plugin::VERSION
+        );
+
         // Skip if using block checkout layout (handled separately)
         if ( 'block' === $checkout_layout['layout'] ) {
             return;
         }
+
+
+        // Enqueue polling script only for inline display mode
+        if ( $this->display_mode === 'inline' ) {
+            wp_enqueue_script(
+                'smepfowo-polling',
+                trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/js/frontend/smepfowo-polling.js',
+                [ 'jquery' ],
+                SMEPFOWO_Plugin::VERSION,
+                true
+            );
+
+            wp_localize_script(
+                'smepfowo-polling',
+                'smepfowo_polling_data',
+                [
+                    'ajax_url' => admin_url( 'admin-ajax.php' ),
+                    'nonce'    => wp_create_nonce( 'smepfowo_nonce_action' ),
+                    'order_id' => absint( WC()->session->get( 'order_awaiting_payment' ) ),
+                ]
+            );
+
+        }
+
 
         // Use recommended path to plugin asset
         $script_path = 'resources/js/frontend/smepfowo-classic-checkout.js';
@@ -244,10 +292,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             [
                 'ajax_url' => admin_url( 'admin-ajax.php' ),
                 'nonce'    => wp_create_nonce( 'smepfowo_nonce_action' ),
+                'display_mode' => $this->display_mode,
             ]
         );
 
         wp_enqueue_script( 'smepfowo-handler' );
+
     }
 
 
@@ -290,6 +340,17 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 'options'     => [
                     'production'  => __( 'Production', 'smepay-for-woocommerce' ),
                     'development' => __( 'Development', 'smepay-for-woocommerce' ),
+                ],
+            ],
+            'display_mode' => [
+                'title'       => __( 'Display Mode', 'smepay-for-woocommerce' ),
+                'type'        => 'select',
+                'description' => __( 'Choose how the QR code should be displayed to the customer during checkout.', 'smepay-for-woocommerce' ),
+                'default'     => 'wizard',
+                'desc_tip'    => true,
+                'options'     => [
+                    'wizard' => __( 'Popup Wizard (default)', 'smepay-for-woocommerce' ),
+                    'inline' => __( 'Inline QR Code', 'smepay-for-woocommerce' ),
                 ],
             ],
             'client_id' => [
@@ -363,6 +424,30 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return [ 'result' => 'failure' ];
         }
 
+        // Optional inline QR support
+        $qr_code = '';
+        $payment_link = '';
+
+        if ( $this->get_option( 'display_mode' ) === 'inline' ) {
+            $initiate = $this->smepfowo_initiate_payment( $slug );
+
+            if ( $initiate && ! empty( $initiate['qr_code'] ) ) {
+                $qr_code       = $initiate['qr_code'];
+                $payment_link  = $initiate['payment_link'] ?? '';
+                $intents = $initiate['intents'] ?? [];
+                
+                // Store for reference
+                $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
+                $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
+                $order->update_meta_data( '_smepfowo_intents', $intents );
+                $order->save();
+            } else {
+                wc_add_notice( __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' ), 'error' );
+                return [ 'result' => 'failure' ];
+            }
+        }
+
+
         $order->update_meta_data( '_smepfowo_slug', $slug );
         $order->save();
 
@@ -373,6 +458,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                     'key'           => $order->get_order_key(),
                     'redirect_url'  => $order->get_checkout_order_received_url(),
                     'smepfowo_slug' => $slug,
+                    'order_id'      => $order_id, 
                 ],
                 $order->get_checkout_payment_url( false )
             )
@@ -388,6 +474,9 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 'order_key'     => $order->get_order_key(),
                 'redirect_url'  => $order->get_checkout_order_received_url(),
                 'redirect'      => $redirect_url,
+                'qr_code'       => $qr_code,
+                'payment_link'  => $payment_link,
+                'intents'       => $intents,
             ];
         }
 
@@ -408,23 +497,31 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * @return string|null SMEPay order slug or null on failure.
      */
     protected function smepfowo_create_order( $order ) {
+        $log_prefix = '[SMEPay Create Order] ';
+
         $order_id  = (string) $order->get_id();
         $timestamp = time();
         $random    = wp_rand(1000, 9999);
         $new_order_id = "{$order_id}-{$timestamp}-{$random}";
         $existing_order_id = $order->get_meta( '_smepfowo_order_id' );
 
+        error_log( $log_prefix . "Generated new_order_id: {$new_order_id}" );
+
         // Prevent duplicate creation
         if ( $existing_order_id === $new_order_id ) {
+            error_log( $log_prefix . "Duplicate order_id detected. Skipping creation." );
             return null;
         }
 
         $token = $this->get_access_token();
         if ( ! $token ) {
+            error_log( $log_prefix . "Failed to retrieve access token." );
             return null;
         }
 
-        // Save new order ID and persist immediately
+        error_log( $log_prefix . "Access token retrieved: {$token}" );
+
+        // Save your generated order ID before sending request
         $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
         $order->save();
 
@@ -433,7 +530,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             'client_id'        => $this->client_id,
             'amount'           => (string) $order->get_total(),
             'order_id'         => $new_order_id,
-            'callback_url'     => $order->get_checkout_order_received_url(),
+            'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
             'customer_details' => [
                 'email'  => $order->get_billing_email(),
                 'mobile' => $order->get_billing_phone(),
@@ -441,8 +538,13 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ],
         ];
 
+        error_log( $log_prefix . 'Payload: ' . wp_json_encode( $payload ) );
+
+        $url = $this->get_api_base_url() . 'external/order/create';
+        error_log( $log_prefix . "Posting to URL: {$url}" );
+
         $response = wp_remote_post(
-            $this->get_api_base_url() . 'external/order/create',
+            $url,
             [
                 'body'    => wp_json_encode( $payload ),
                 'headers' => [
@@ -454,16 +556,152 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
+            error_log( $log_prefix . 'WP Error: ' . $response->get_error_message() );
+            return null;
+        }
+
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $raw_body    = wp_remote_retrieve_body( $response );
+        $body        = json_decode( $raw_body, true );
+
+        error_log( $log_prefix . "Response Code: {$status_code}" );
+        error_log( $log_prefix . 'Raw Response Body: ' . $raw_body );
+
+        // Update the meta with the real SMEPay order_id if returned
+        if ( ! empty( $body['order_id'] ) ) {
+            $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
+            $order->save();
+            error_log( $log_prefix . "Saved SMEPay order_id: {$body['order_id']}" );
+        }
+
+        // Save the order slug if returned
+        $slug = $body['order_slug'] ?? null;
+        if ( is_string( $slug ) && $slug !== '' ) {
+            $order->update_meta_data( '_smepfowo_slug', $slug );
+            $order->save();
+            error_log( $log_prefix . "Order slug created: {$slug}" );
+            return $slug;
+        }
+
+        error_log( $log_prefix . "Failed to retrieve valid order_slug from response." );
+        return null;
+    }
+
+
+
+    /**
+     * Initiate SMEPay Payment
+     *
+     * @param string $slug SMEPay order slug.
+     * @return array|null Payment initiation response or null on failure.
+     */
+    protected function smepfowo_initiate_payment( $slug ) {
+        if ( empty( $slug ) || empty( $this->client_id ) ) {
+            return null;
+        }
+
+        $token = $this->get_access_token();
+        if ( ! $token ) {
+            return null;
+        }
+
+        $payload = [
+            'slug'      => $slug,
+            'client_id' => $this->client_id,
+        ];
+
+        $response = wp_remote_post(
+            $this->get_api_base_url() . 'external/order/initiate',
+            [
+                'body'    => wp_json_encode( $payload ),
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ],
+                'timeout' => self::TIMEOUT,
+            ]
+        );
+
+
+        if ( is_wp_error( $response ) ) {
             return null;
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
-        $slug = $body['order_slug'] ?? null;
 
-        if ( is_string( $slug ) && $slug !== '' ) {
-            $order->update_meta_data( '_smepfowo_slug', $slug );
-            $order->save();
-            return $slug;
+        error_log( 'SMEPay Payload: ' . wp_json_encode( $payload ) );
+        error_log( 'SMEPay Response: ' . print_r( $body, true ) );
+
+        if ( isset( $body['status'] ) && $body['status'] === true ) {
+            return $body;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check SMEPay order payment status.
+     *
+     * @param int $order_id WooCommerce order ID.
+     * @return array|null Status response or null on failure.
+     */
+    public function smepfowo_check_order_status( $order_id ) {
+        error_log( 'zzzz[SMEPFOWO] smepfowo_check_order_status() triggered for Order ID: ' . $order_id );
+        $order = wc_get_order(1251);
+        error_log('[SMEPFOWO DEBUG] _smepfowo_order_id: ' . $order->get_meta('_smepfowo_order_id'));
+
+
+        if ( empty( $order_id ) || empty( $this->client_id ) ) {
+            return null;
+        }
+
+        $order = wc_get_order( $order_id );
+        if ( ! $order ) {
+            return null;
+        }
+
+        $smepfowo_order_id = $order->get_meta( '_smepfowo_order_id' );
+        if ( empty( $smepfowo_order_id ) ) {
+            return null;
+        }
+
+        error_log( 'xxxx[SMEPFOWO] smepfowo_check_order_status() triggered for Order ID: ' . $order_id );
+
+
+        $token = $this->get_access_token();
+        if ( ! $token ) {
+            return null;
+        }
+
+        $payload = [
+            'order_id'  => $smepfowo_order_id, // TCY7284904531103
+            'client_id' => $this->client_id, // ✅ REQUIRED by SMEPay API
+        ];
+
+        $response = wp_remote_post(
+            $this->get_api_base_url() . 'external/order/status',
+            [
+                'body'    => wp_json_encode( $payload ),
+                'headers' => [
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ],
+                'timeout' => self::TIMEOUT,
+            ]
+        );
+
+        if ( is_wp_error( $response ) ) {
+            error_log( '[SMEPay Order Status] WP Error: ' . $response->get_error_message() );
+            return null;
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+
+        error_log( '[SMEPay Order Status] Payload: ' . wp_json_encode( $payload ) );
+        error_log( '[SMEPay Order Status] Response: ' . print_r( $body, true ) );
+
+        if ( isset( $body['status'] ) && $body['status'] === true ) {
+            return $body;
         }
 
         return null;
@@ -495,6 +733,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        
+        error_log( 'SMEPay Response: ' . print_r( $body, true ) );
 
         return $body['access_token'] ?? null;
     }

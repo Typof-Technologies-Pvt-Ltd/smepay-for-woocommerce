@@ -44,16 +44,104 @@ jQuery(function ($) {
           return false;
         }
 
-        if (response.result === 'success' && response.smepfowo_slug) {
-          window.smepayCheckout({
-            slug: response.smepfowo_slug,
-            onSuccess: function () {
-              window.location.href = response.redirect_url;
-            },
-            onFailure: function () {
-              console.warn(__('❌ SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
+        if (response.result === 'success' && (response.smepfowo_slug || response.smepfowo_partial_cod_slug)) {
+          const paymentSlug = response.smepfowo_slug || response.smepfowo_partial_cod_slug;
+          // Only trigger the widget popup in wizard mode
+          if (smepfowo_data.display_mode === 'wizard') {
+            window.smepayCheckout({
+              slug: paymentSlug,
+              onSuccess: function () {
+                window.location.href = response.redirect_url;
+              },
+              onFailure: function () {
+                console.warn(__('❌ SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
+              }
+            });
+          } else if (smepfowo_data.display_mode === 'inline') {
+              console.log(__('✅ SMEPay inline mode - render QR + intents', 'smepay-for-woocommerce'));
+
+              const $paymentBox = $(`.payment_box.payment_method_${selectedMethod}`);
+
+              if ($paymentBox.length) {
+                const isMobile = window.innerWidth < 768; // Mobile detection
+                const intents = response.intents || {};
+                const paymentLink = response.payment_link || '';
+
+                const icons = {
+                  gpay: 'https://typof.co/gpay.png',
+                  phonepe: 'https://typof.co/phonepe.png',
+                  paytm: 'https://typof.co/paytm.png',
+                  bhim: 'https://typof.co/bhim.png'
+                };
+
+                let html = `
+                  <p><strong>${__('Secure by SMEPay')}</strong></p>
+                  <div id="smepfowo-qr-content" style="text-align:center; margin-top: 15px;">
+                `;
+
+                if (!isMobile && response.qr_code) {
+                  // ✅ Desktop/tablet: show QR code
+                  html += `
+                    <h6>${__('Scan this QR to Pay', 'smepay-for-woocommerce')}</h6>
+                    <img class="smepfowo-qr-image" src="data:image/png;base64,${response.qr_code}" alt="QR Code" style="max-width: 250px;" />
+                  `;
+                }
+
+                // ✅ Show intents only on mobile
+                if (Object.keys(intents).length > 0) {
+                  html += `
+                    <div class="smepfowo-intents-mobile-only">
+                      <h6 style="margin-top:20px;">${__('Pay using your UPI app', 'smepay-for-woocommerce')}</h6>
+                      <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px;">
+                  `;
+
+                  const orderedApps = ['phonepe', 'gpay', 'paytm', 'bhim'];
+
+                  orderedApps.forEach((app) => {
+                    const link = intents[app];
+                    if (!link) return;
+
+                    const icon = icons[app] || '';
+                    const labels = {
+                      phonepe: 'PhonePe',
+                      gpay: 'GPay',
+                      paytm: 'Paytm',
+                      bhim: __('Others', 'smepay-for-woocommerce')
+                    };
+
+                    const label = labels[app] || app;
+
+
+                    html += `
+                      <div class="smepfowo-intent-item" style="flex: 0 0 45%; max-width: 45%; text-align: center;">
+                        <a href="${link}" target="_blank" rel="noopener noreferrer">
+                          <img src="${icon}" alt="${app}" style="height: 28px; margin-bottom: 4px;" />
+                        </a>
+                        <div style="font-size: 12px;">${label}</div>
+                      </div>
+                    `;
+                  });
+
+
+
+
+                  html += `
+                      </div>
+                    </div>
+                  `;
+                } else {
+                  html += `<p>${__('UPI app links are currently unavailable.', 'smepay-for-woocommerce')}</p>`;
+                }
+
+                html += `</div>`; // end #smepfowo-qr-content
+
+                $paymentBox.html(html);
+              } else {
+                console.warn('❌ Could not find .payment_box.payment_method_smepfowo to render QR or intents.');
+              }
             }
-          });
+
+
         } else {
           console.warn(__('⚠️ Unexpected response:', 'smepay-for-woocommerce'), response);
         }

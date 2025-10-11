@@ -58,16 +58,47 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
      * @return array
      */
     public function get_payment_method_script_handles() {
-        // Check if on order received (thank you) page and order is paid
         $is_paid = false;
-        if ( is_order_received_page() ) {
+        $order_id = 0;
+        $qr_code = '';
+        $payment_link = '';
+        $intents = '';
+
+        // Detect correct order ID from different contexts
+        if ( is_checkout_pay_page() ) {
+            $order_id = absint( get_query_var( 'order-pay' ) );
+            error_log( '[SMEPFOWO] order-pay page order_id: ' . $order_id );
+        } elseif ( is_order_received_page() ) {
             $order_id = absint( get_query_var( 'order-received' ) );
-            $order    = wc_get_order( $order_id );
-            if ( $order instanceof WC_Order && $order->is_paid() ) {
-                $is_paid = true;
+            error_log( '[SMEPFOWO] order-received page order_id: ' . $order_id );
+        } else {
+            $order_id = WC()->session ? WC()->session->get( 'order_awaiting_payment' ) : 0;
+            error_log( '[SMEPFOWO] session-based checkout order_id: ' . $order_id );
+        }
+
+        // If we have an order ID, try to fetch the order and meta
+        if ( $order_id ) {
+            $order = wc_get_order( $order_id );
+
+            if ( $order instanceof WC_Order ) {
+                $qr_code = $order->get_meta( '_smepfowo_qr_code' );
+                $payment_link = $order->get_meta( '_smepfowo_payment_link' );
+                $intents = $order->get_meta( '_smepfowo_intents' );
+
+                if ( $order->is_paid() ) {
+                    $is_paid = true;
+                }
+
+                // ✅ Log info
+                error_log( '[SMEPFOWO] QR Code for order ' . $order_id . ': ' . ( $qr_code ? substr( $qr_code, 0, 40 ) . '...' : 'empty' ) );
+                error_log( '[SMEPFOWO] Payment link: ' . ( $payment_link ?: 'empty' ) );
+                error_log( '[SMEPFOWO] Is paid: ' . ( $is_paid ? 'yes' : 'no' ) );
+            } else {
+                error_log( '[SMEPFOWO] Order object could not be retrieved for ID: ' . $order_id );
             }
         }
 
+        // Setup script registration
         $script_handle = 'smepfowo-payments-blocks';
         $script_rel_path = 'resources/js/frontend/smepfowo-block-checkout.js';
         $script_url = trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . $script_rel_path;
@@ -97,17 +128,33 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
             );
         }
 
+        // Localize data for JS
         wp_localize_script(
             $script_handle,
             'smepfowoCheckoutData',
             [
-                'orderPaid' => $is_paid,
-                'imgUrl' => trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/img/smepfowo.svg',
+                'orderPaid'    => $is_paid,
+                'imgUrl'       => trailingslashit( SMEPFOWO_Plugin::plugin_url() ) . 'resources/img/smepfowo.svg',
+                'qrCode'       => $qr_code,
+                'paymentLink'  => $payment_link,
+                'orderId'      => $order_id,
+                'intents'      => $intents,
             ]
         );
 
+        wp_localize_script(
+            $script_handle,
+            'smepfowo_data',
+            [
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce'    => wp_create_nonce('smepfowo_nonce_action'),
+            ]
+        );
+
+
         return [ $script_handle ];
     }
+
 
     /**
      * Returns an array of key=>value pairs of data made available to the payment methods script.
@@ -119,6 +166,7 @@ final class SMEPFOWO_Gateway_Blocks_Support extends AbstractPaymentMethodType {
             'title'       => $this->get_setting( 'title' ),
             'description' => $this->get_setting( 'description' ),
             'supports'    => array_filter( $this->gateway->supports, [ $this->gateway, 'supports' ] ),
+            'display_mode' => $this->get_setting( 'display_mode', 'wizard' ),
         ];
     }
 }

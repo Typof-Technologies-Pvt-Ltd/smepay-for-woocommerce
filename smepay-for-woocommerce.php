@@ -97,11 +97,13 @@ class SMEPFOWO_Plugin {
      */
     public static function includes() {
         require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-utils.php';
+        require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-webhook-handler.php';
 
         if ( class_exists( 'WC_Payment_Gateway' ) ) {
             require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-gateway.php';
             require_once SMEPFOWO_Plugin::plugin_abspath() . 'includes/class-smepfowo-partial-cod-gateway.php';
         }
+        new SMEPFOWO_Webhook_Handler();
     }
 
     /**
