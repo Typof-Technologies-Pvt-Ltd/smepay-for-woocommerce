@@ -356,3 +356,9 @@ function smepfowo_partial_cod_email_instructions( $order, $sent_to_admin, $plain
         echo '<p>' . esc_html( $message ) . '</p>';
     }
 }
+
+add_filter('woocommerce_default_gateway', 'smepfowo_force_partial_cod_as_default');
+
+function smepfowo_force_partial_cod_as_default($default_gateway) {
+    return 'smepfowo_partial_cod';
+}

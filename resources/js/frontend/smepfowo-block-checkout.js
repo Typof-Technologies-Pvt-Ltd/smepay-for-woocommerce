@@ -68,17 +68,11 @@
   const paymentSlug = smepfowoSlug || smepfowoPartialCODSlug;
   const smepfowoRedirectUrl = urlParams.get('redirect_url') || window.location.href;
 
-  console.log('smepfowoSlug:', smepfowoSlug);
-  console.log('smepfowoPartialCODSlug:', smepfowoPartialCODSlug);
-
-  console.log('1xzxz[smepfowoPartialCODSlug] Payment slug:', smepfowoPartialCODSlug);
-
   const supportedMethods = ['smepfowo', 'smepfowo_partial_cod'];
 
   // Helpers to fetch method data
   const getLabelText = (methodId) => {
     const methodData = window.wc?.wcSettings?.getPaymentMethodData?.(methodId);
-    console.log(`wcSettings data for ${methodId}:`, methodData);
     return methodData?.title || __('Pay with UPI', 'smepay-for-woocommerce');
   };
 
@@ -90,10 +84,6 @@
   // Register payment methods
   supportedMethods.forEach((methodId) => {
     const methodData = window.wc?.wcSettings?.getPaymentMethodData?.(methodId);
-    if (methodData) {
-      console.log(`Payment method data for ${methodId}:`, methodData);
-      console.log(`Display mode for ${methodId}:`, methodData.display_mode);
-    }
 
     const title = getLabelText(methodId);
     const description = getDescriptionContent(methodId);
@@ -130,7 +120,6 @@
 
   const smepfowoTriggerPaymentWidget = () => {
     if (smepfowoOrderPaid) {
-      console.log(__('Order is already paid. SMEPay widget will not be triggered.', 'smepay-for-woocommerce'));
       return;
     }
 
@@ -138,13 +127,7 @@
       const nonce = smepfowo_data.nonce;
       const ajaxUrl = smepfowo_data.ajax_url;
 
-      console.log('[SMEPFOWO] Starting polling for Order ID:', orderId);
-      console.log('[SMEPFOWO] AJAX URL:', ajaxUrl);
-      console.log('[SMEPFOWO] Nonce:', nonce);
-      console.log('[SMEPFOWO] checkoutData:', checkoutData);
-
       const checkPaymentStatus = () => {
-        console.log('[SMEPFOWO] Polling payment status...');
 
         jQuery.ajax({
           url: ajaxUrl,
@@ -155,14 +138,11 @@
             order_id: orderId,
           },
           success: function (response) {
-            console.log('[SMEPFOWO] Polling response:', response);
 
             if (response.success) {
               const status = response.data.status;
-              console.log('[SMEPFOWO] Payment status:', status);
 
               if (status === 'SUCCESS' || status === 'TEST_SUCCESS') {
-                console.log('[SMEPFOWO] Payment successful. Showing subtle redirect overlay...');
                 clearInterval(pollingInterval);
                 showSMEPFOWORedirectOverlay('Please wait, redirecting...', 800, smepfowoRedirectUrl);
               }
@@ -181,22 +161,13 @@
       checkPaymentStatus();
     } else {
       console.warn('[SMEPFOWO] Polling not started. Missing order ID or nonce.');
-      console.log('[SMEPFOWO] checkoutData:', checkoutData);
-      console.log('[SMEPFOWO] smepfowo_data:', typeof smepfowo_data !== 'undefined' ? smepfowo_data : 'undefined');
     }
 
     // Check if either smepfowoSlug or smepfowoPartialCODSlug exists
-    console.log('2xzxz[SMEPFOWO] Payment slug:', paymentSlug);
-
     if (paymentSlug && typeof window.smepayCheckout === 'function') {
-      console.log('[SMEPFOWO] Triggering SMEPay checkout...');
-      console.log('[SMEPFOWO] Payment slug:', paymentSlug);
-      console.log('[SMEPFOWO] Payment method slug:', smepfowoSlug); // Check which slug is being used
-
       window.smepayCheckout({
         slug: paymentSlug,
         onSuccess: () => {
-          console.log('[SMEPFOWO] SMEPay checkout success');
           // Use paymentSlug consistently
           window.location.href = smepfowoRedirectUrl.includes('?')
             ? `${smepfowoRedirectUrl}&${paymentSlug ? 'smepfowo_slug' : 'smepfowo_partial_cod_slug'}=${paymentSlug}`
@@ -303,7 +274,6 @@
 
     const isMobile = window.innerWidth < 768;
     if (!isMobile) {
-      console.log('[SMEPFOWO] Not mobile. Skipping UPI intents.');
       return;
     }
 
@@ -378,28 +348,39 @@
 
 
   // Re-trigger widget when payment method is changed
-  document.addEventListener('change', (e) => {
-    const input = e.target;
-    if (
-      input?.matches('input[name="payment_method"]') &&
-      supportedMethods.includes(input.value)
-    ) {
-      debounceTrigger();
+document.addEventListener('change', (e) => {
+  const input = e.target;
+  const supported = ['smepfowo', 'smepfowo_partial_cod'];
 
-      if (['smepfowo', 'smepfowo_partial_cod'].includes(input.value)) {
-        insertQRCodeIntoClassicPaymentBox();
-        insertIntentsIntoClassicPaymentBox();
-      }
-    }
-  });
+  if (input?.matches('input[name="payment_method"]') && supported.includes(input.value)) {
+    debounceTrigger(); // Your existing payment status polling logic
+    insertQRCodeIntoClassicPaymentBox();
+    insertIntentsIntoClassicPaymentBox();
+  }
+});
 
-  // Ensure QR is inserted on page load if smepfowo is already selected
-  document.addEventListener('DOMContentLoaded', () => {
-    const input = document.querySelector('input[name="payment_method"]:checked');
-    if (input && ['smepfowo', 'smepfowo_partial_cod'].includes(input.value)) {
+// Force-select `smepfowo_partial_cod` on page load and insert related content
+document.addEventListener('DOMContentLoaded', () => {
+  const preferredMethod = 'smepfowo_partial_cod';
+  const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
+
+  if (input) {
+    input.checked = true;
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    // Immediately insert content
+    insertQRCodeIntoClassicPaymentBox();
+    insertIntentsIntoClassicPaymentBox();
+    debounceTrigger(); // Start polling if needed
+  } else {
+    // Fallback: if already selected and valid
+    const selectedInput = document.querySelector('input[name="payment_method"]:checked');
+    if (selectedInput && ['smepfowo', 'smepfowo_partial_cod'].includes(selectedInput.value)) {
       insertQRCodeIntoClassicPaymentBox();
       insertIntentsIntoClassicPaymentBox();
+      debounceTrigger();
     }
-  });
+  }
+});
+
 
 })();

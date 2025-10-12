@@ -58,8 +58,6 @@ jQuery(function ($) {
               }
             });
           } else if (smepfowo_data.display_mode === 'inline') {
-              console.log(__('✅ SMEPay inline mode - render QR + intents', 'smepay-for-woocommerce'));
-
               const $paymentBox = $(`.payment_box.payment_method_${selectedMethod}`);
 
               if ($paymentBox.length) {
