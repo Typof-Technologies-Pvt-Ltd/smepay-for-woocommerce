@@ -68,6 +68,12 @@
   const paymentSlug = smepfowoSlug || smepfowoPartialCODSlug;
   const smepfowoRedirectUrl = urlParams.get('redirect_url') || window.location.href;
 
+  // 🔒 Hide classic smepfowo method if partial COD slug is in URL
+  if (smepfowoPartialCODSlug) {
+    const smepfowoLi = document.querySelector('li.payment_method_smepfowo');
+    if (smepfowoLi) smepfowoLi.style.display = 'none';
+  }
+
   const supportedMethods = ['smepfowo', 'smepfowo_partial_cod'];
 
   // Helpers to fetch method data
@@ -381,6 +387,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+  // Add the forced click after 10 seconds inside the same scope
+  setTimeout(() => {
+    const preferredMethod = 'smepfowo_partial_cod';
+    const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
+
+    if (input) {
+      input.click();
+
+      if (typeof insertQRCodeIntoClassicPaymentBox === 'function') insertQRCodeIntoClassicPaymentBox();
+      if (typeof insertIntentsIntoClassicPaymentBox === 'function') insertIntentsIntoClassicPaymentBox();
+      if (typeof debounceTrigger === 'function') debounceTrigger();
+    } else {
+      console.warn(`[SMEPFOWO] Payment method input not found: ${preferredMethod}`);
+    }
+  }, 10000);
 
 
 })();
