@@ -68,7 +68,11 @@
   const paymentSlug = smepfowoSlug || smepfowoPartialCODSlug;
   const smepfowoRedirectUrl = urlParams.get('redirect_url') || window.location.href;
 
-  // 🔒 Hide classic smepfowo method if partial COD slug is in URL
+  if (smepfowoSlug) {
+    const smepfowoLi = document.querySelector('li.payment_method_smepfowo_partial_cod');
+    if (smepfowoLi) smepfowoLi.style.display = 'none';
+  }
+
   if (smepfowoPartialCODSlug) {
     const smepfowoLi = document.querySelector('li.payment_method_smepfowo');
     if (smepfowoLi) smepfowoLi.style.display = 'none';
@@ -163,7 +167,7 @@
         });
       };
 
-      const pollingInterval = setInterval(checkPaymentStatus, 5000);
+      const pollingInterval = setInterval(checkPaymentStatus, 10000);
       checkPaymentStatus();
     } else {
       console.warn('[SMEPFOWO] Polling not started. Missing order ID or nonce.');
@@ -354,55 +358,48 @@
 
 
   // Re-trigger widget when payment method is changed
-document.addEventListener('change', (e) => {
-  const input = e.target;
-  const supported = ['smepfowo', 'smepfowo_partial_cod'];
+  document.addEventListener('change', (e) => {
+    const input = e.target;
+    const supported = ['smepfowo', 'smepfowo_partial_cod'];
 
-  if (input?.matches('input[name="payment_method"]') && supported.includes(input.value)) {
-    debounceTrigger(); // Your existing payment status polling logic
-    insertQRCodeIntoClassicPaymentBox();
-    insertIntentsIntoClassicPaymentBox();
-  }
-});
-
-// Force-select `smepfowo_partial_cod` on page load and insert related content
-document.addEventListener('DOMContentLoaded', () => {
-  const preferredMethod = 'smepfowo_partial_cod';
-  const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
-
-  if (input) {
-    input.checked = true;
-    input.dispatchEvent(new Event('change', { bubbles: true }));
-    // Immediately insert content
-    insertQRCodeIntoClassicPaymentBox();
-    insertIntentsIntoClassicPaymentBox();
-    debounceTrigger(); // Start polling if needed
-  } else {
-    // Fallback: if already selected and valid
-    const selectedInput = document.querySelector('input[name="payment_method"]:checked');
-    if (selectedInput && ['smepfowo', 'smepfowo_partial_cod'].includes(selectedInput.value)) {
+    if (input?.matches('input[name="payment_method"]') && supported.includes(input.value)) {
+      debounceTrigger(); // Your existing payment status polling logic
       insertQRCodeIntoClassicPaymentBox();
       insertIntentsIntoClassicPaymentBox();
-      debounceTrigger();
     }
-  }
-});
+  });
 
-  // Add the forced click after 10 seconds inside the same scope
   setTimeout(() => {
-    const preferredMethod = 'smepfowo_partial_cod';
+    let preferredMethod = null;
+
+    if (smepfowoSlug) {
+      preferredMethod = 'smepfowo';
+    }
+
+    if (smepfowoPartialCODSlug) {
+      preferredMethod = 'smepfowo_partial_cod';
+    }
+
+    if (!preferredMethod) {
+      console.warn('[SMEPFOWO] No valid slug found to select payment method.');
+      return;
+    }
+
     const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
 
     if (input) {
       input.click();
-
-      if (typeof insertQRCodeIntoClassicPaymentBox === 'function') insertQRCodeIntoClassicPaymentBox();
-      if (typeof insertIntentsIntoClassicPaymentBox === 'function') insertIntentsIntoClassicPaymentBox();
-      if (typeof debounceTrigger === 'function') debounceTrigger();
+      if (typeof insertQRCodeIntoClassicPaymentBox === 'function') {
+        insertQRCodeIntoClassicPaymentBox();
+      }
+      if (typeof insertIntentsIntoClassicPaymentBox === 'function') {
+        insertIntentsIntoClassicPaymentBox();
+      }
+      if (typeof debounceTrigger === 'function') {
+        debounceTrigger();
+      }
     } else {
       console.warn(`[SMEPFOWO] Payment method input not found: ${preferredMethod}`);
     }
   }, 10000);
-
-
 })();

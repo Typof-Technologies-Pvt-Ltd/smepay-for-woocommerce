@@ -1,3 +1,6 @@
+/* ===============================
+   🚨 Overlay Styling (Redirect Screen)
+   =============================== */
 .smepfowo-redirect-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -35,16 +38,38 @@
 }
 
 @keyframes smepfowo-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
+
+/* ===============================
+   🖼️ QR Code Styling (Classic Checkout)
+   =============================== */
+#payment ul.payment_methods img.smepfowo-qr-code {
+  display: block !important;
+  margin: 20px auto !important;
+  float: none !important;
+  max-height: none !important;
+  max-width: none !important;
+  width: 260px !important;
+  height: auto !important;
+}
+
+
+/* ===============================
+   📱 Responsive Adjustments
+   =============================== */
+
+/* 🔒 Hide QR on small screens */
 @media (max-width: 767px) {
   .smepfowo-qr-image {
     display: none !important;
   }
 }
 
-/* Hide intents block on desktop */
+/* 🔒 Hide UPI intents block on desktop */
 @media (min-width: 768px) {
   .smepfowo-intents-mobile-only {
     display: none !important;
