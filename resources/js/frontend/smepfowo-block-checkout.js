@@ -283,9 +283,7 @@
     if (container.querySelector('.smepfowo-intents-mobile-only')) return;
 
     const isMobile = window.innerWidth < 768;
-    if (!isMobile) {
-      return;
-    }
+    if (!isMobile) return;
 
     if (!intents || typeof intents !== 'object') {
       console.warn('[SMEPFOWO] No intents found.');
@@ -310,14 +308,15 @@
 
     const wrapper = document.createElement('div');
     wrapper.className = 'smepfowo-intents-mobile-only';
-    wrapper.style = 'margin-top: 20px; text-align: center;';
+    wrapper.style.marginTop = '20px';
+    wrapper.style.textAlign = 'center';
 
     const heading = document.createElement('h6');
     heading.textContent = __('Pay using your UPI app', 'smepay-for-woocommerce');
     wrapper.appendChild(heading);
 
     const grid = document.createElement('div');
-    grid.style = 'display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 10px;';
+    grid.className = 'smepfowo-intents-grid'; // We'll define this in CSS
 
     orderedApps.forEach((app) => {
       const link = intents[app];
@@ -328,7 +327,6 @@
 
       const item = document.createElement('div');
       item.className = 'smepfowo-intent-item';
-      item.style = 'flex: 0 0 45%; max-width: 45%; text-align: center;';
 
       const anchor = document.createElement('a');
       anchor.href = link;
@@ -338,10 +336,11 @@
       const img = document.createElement('img');
       img.src = icon;
       img.alt = label;
-      img.style = 'height: 28px; margin-bottom: 4px;';
+      img.style.height = '28px';
+      img.style.marginBottom = '4px';
 
       const text = document.createElement('div');
-      text.style = 'font-size: 12px;';
+      text.style.fontSize = '12px';
       text.textContent = label;
 
       anchor.appendChild(img);
@@ -354,8 +353,6 @@
     wrapper.appendChild(grid);
     container.appendChild(wrapper);
   };
-
-
 
   // Re-trigger widget when payment method is changed
   document.addEventListener('change', (e) => {
