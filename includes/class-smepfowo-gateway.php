@@ -522,7 +522,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Prepare payload
         $payload = [
             'client_id'        => $this->client_id,
-            'amount'           => (string) $order->get_total(),
+            'amount'           => number_format( (float) $order->get_total(), 2, '.', '' ),
             'order_id'         => $new_order_id,
             'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
             'customer_details' => [
@@ -739,7 +739,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Prepare request data
         $data = [
             'client_id' => $this->client_id,
-            'amount'    => (float) $order->get_total(),
+            'amount'    => number_format( (float) $order->get_total(), 2, '.', '' ),
             'slug'      => $order->get_meta( '_smepfowo_slug' ),
         ];
 

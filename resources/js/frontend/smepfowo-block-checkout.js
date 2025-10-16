@@ -47,6 +47,95 @@
     }, delay);
   }
 
+  function togglePlaceOrderButton() {
+    const selectedInput = document.querySelector('input[name="payment_method"]:checked');
+    const selectedMethod = selectedInput?.value;
+    const supported = ['smepfowo', 'smepfowo_partial_cod'];
+    const isSMEPay = supported.includes(selectedMethod);
+
+    // Get the correct "Place Order" button (classic or block checkout)
+    let $btn = document.querySelector('#place_order') ||
+               document.querySelector('button[name="wc-block-components-checkout-place-order-button"]');
+
+    if (!$btn) return;
+
+    // Classic: input[type="submit"], Block: button
+    const setButtonText = (text) => {
+      if ($btn.tagName === 'INPUT') {
+        $btn.value = text;
+      } else {
+        $btn.textContent = text;
+      }
+    };
+
+    if (isSMEPay) {
+      const container = document.querySelector(`.payment_box.payment_method_${selectedMethod}`);
+      const hasQR = container?.querySelector('.smepfowo-qr-image');
+      const hasIntent = container?.querySelector('.smepfowo-intent-item');
+
+      if (hasQR || hasIntent) {
+        $btn.style.display = 'none'; // Hide if QR or intent exists
+      } else {
+        $btn.style.display = ''; // Show button
+        setButtonText(__('Retry Payment', 'woocommerce'));
+      }
+    } else {
+      // If other method is selected, always show
+      $btn.style.display = '';
+      setButtonText(__('Place order', 'woocommerce'));
+    }
+  }
+
+
+
+  const startCountdownTimer = (container, durationSeconds = 300) => {
+    // Check if timer already exists to prevent duplicates
+    if (container.querySelector('.smepfowo-countdown-timer')) return;
+
+    const timerEl = document.createElement('div');
+    timerEl.className = 'smepfowo-countdown-timer';
+    timerEl.style.marginTop = '10px';
+    timerEl.style.fontSize = '14px';
+    timerEl.style.fontWeight = '600';
+    timerEl.style.textAlign = 'center';
+    timerEl.style.color = '#d9534f'; // red-ish color, adjust as needed
+
+    container.appendChild(timerEl);
+
+    let remaining = durationSeconds;
+
+    const updateTimer = () => {
+      if (remaining <= 0) {
+        timerEl.textContent = __('Payment window expired', 'smepay-for-woocommerce');
+        clearInterval(intervalId);
+
+        // Force show the "Retry Payment" button
+        const $btn = document.querySelector('#place_order') ||
+                     document.querySelector('button[name="wc-block-components-checkout-place-order-button"]');
+        if ($btn) {
+          $btn.style.display = '';
+          if ($btn.tagName === 'INPUT') {
+            $btn.value = __('Retry Payment', 'woocommerce');
+          } else {
+            $btn.textContent = __('Retry Payment', 'woocommerce');
+          }
+        }
+
+        return;
+      }
+
+
+      const minutes = Math.floor(remaining / 60);
+      const seconds = remaining % 60;
+      timerEl.textContent = __('Time left: ', 'smepay-for-woocommerce') + `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      remaining -= 1;
+    };
+
+    updateTimer(); // initial call
+    const intervalId = setInterval(updateTimer, 1000);
+  };
+
+
 
   // Dynamically detect and use available checkout data
   const checkoutData =
@@ -61,6 +150,31 @@
     paymentLink = '',
     intents = '',
   } = checkoutData;
+
+  let formattedAmount = '';
+  try {
+    // Try extracting from PhonePe or any other intent URL
+    const sampleIntentUrl = intents?.phonepe || intents?.gpay || intents?.paytm || intents?.bhim || '';
+    const match = sampleIntentUrl.match(/[?&]am=(\d+)/);
+
+    if (match && match[1]) {
+      const paise = parseInt(match[1], 10);
+      const rupees = paise / 100;
+
+      const locale = smepfowo_data?.locale || 'en-IN';
+      const currency = wc_checkout_params?.currency || smepfowo_data?.currency || 'INR';
+
+      formattedAmount = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(rupees);
+    }
+  } catch (err) {
+    console.warn('[SMEPFOWO] Amount formatting failed:', err);
+  }
+
 
   const urlParams = new URLSearchParams(window.location.search);
   const smepfowoSlug = urlParams.get('smepfowo_slug');
@@ -240,31 +354,31 @@
     }
 
     // Prevent duplicate insertion
-    if (container.querySelector('.smepfowo-qr-code')) return;
+    if (container.querySelector('.smepfowo-qr-code') || container.querySelector('h6.smepfowo-qr-heading')) return;
 
+    // Create heading
+    const heading = document.createElement('h6');
+    heading.className = 'smepfowo-qr-heading smepfowo-qr-image';
+    heading.style.textAlign = 'center';
+    heading.style.marginTop = '10px';
+    heading.style.fontWeight = '600';
+    heading.style.fontSize = '16px';
+    heading.innerText = `${__('Scan this QR to Pay', 'smepay-for-woocommerce')}${formattedAmount ? ` – ${formattedAmount}` : ''}`;
+
+    // Create QR code image
     const img = document.createElement('img');
     img.src = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
     img.alt = 'SMEPay QR Code';
     img.className = 'smepfowo-qr-code smepfowo-qr-image fade-in pulse';
     img.style = 'margin: 10px auto 0 auto; max-width: 200px; display: block;';
 
-
-    // ✅ Icons container (UPI app logos)
-    const iconsContainer = document.createElement('div');
-    iconsContainer.className = 'smepfowo-qr-app-icons';
-    iconsContainer.innerHTML = `
-      <div style="display: flex; justify-content: center; gap: 16px; margin-top: 12px;">
-        <img alt="gpay" src="https://typof.co/gpay.png" style="height: 24px;">
-        <img alt="phonepe" src="https://typof.co/phonepe.png" style="height: 24px;">
-        <img alt="paytm" src="https://typof.co/paytm.png" style="height: 24px;">
-        <img alt="bhim" src="https://typof.co/bhim.png" style="height: 24px;">
-      </div>
-    `;
-
-
+    container.appendChild(heading);
     container.appendChild(img);
-    // container.appendChild(iconsContainer);
+    // Start the 5-min countdown timer inside the same container
+    startCountdownTimer(container, 300);  // 300 seconds = 5 minutes
   };
+
+
 
   const insertIntentsIntoClassicPaymentBox = () => {
     const selectedInput = document.querySelector('input[name="payment_method"]:checked');
@@ -312,7 +426,9 @@
     wrapper.style.textAlign = 'center';
 
     const heading = document.createElement('h6');
-    heading.textContent = __('Pay using your UPI app', 'smepay-for-woocommerce');
+    heading.style.marginBottom = '12px'; // optional styling for spacing
+    // Add amount dynamically next to heading text
+    heading.textContent = `${__('Pay using your UPI app', 'smepay-for-woocommerce')}${formattedAmount ? ` – ${formattedAmount}` : ''}`;
     wrapper.appendChild(heading);
 
     const grid = document.createElement('div');
@@ -352,6 +468,8 @@
 
     wrapper.appendChild(grid);
     container.appendChild(wrapper);
+    // Start the 5-min countdown timer inside the same container
+    startCountdownTimer(container, 300);  // 300 seconds = 5 minutes
   };
 
   // Re-trigger widget when payment method is changed
@@ -363,7 +481,11 @@
       debounceTrigger(); // Your existing payment status polling logic
       insertQRCodeIntoClassicPaymentBox();
       insertIntentsIntoClassicPaymentBox();
+      togglePlaceOrderButton();
+    } else {
+      togglePlaceOrderButton(); // Handles showing button again when switching away
     }
+
   });
 
   setTimeout(() => {

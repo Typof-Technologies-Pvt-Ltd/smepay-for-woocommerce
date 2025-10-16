@@ -198,3 +198,26 @@ if (
 ) {
     SMEPFOWO_Plugin::init();
 }
+
+function smepfowo_upgrade_notice() {
+    $current_version = '1.0.2';
+
+    // Check if dismissed
+    if ( get_option( 'smepfowo_notice_dismissed' ) === 'yes' ) {
+        return;
+    }
+
+    ?>
+    <div class="notice notice-error is-dismissible">
+        <p><strong><?php esc_html_e( '== SMEPay for WooCommerce Upgrade Notice ==', 'smepay-for-woocommerce' ); ?></strong></p>
+        <p><strong><?php esc_html_e( 'Version 1.0.2', 'smepay-for-woocommerce' ); ?></strong></p>
+        <p><?php esc_html_e( 'Critical update: Updated API endpoints and improved order status handling.', 'smepay-for-woocommerce' ); ?></p>
+        <p><strong><?php esc_html_e( 'Important: You MUST obtain new API keys. Old API keys will no longer work.', 'smepay-for-woocommerce' ); ?></strong></p>
+        <p><?php esc_html_e( 'Please update your plugin settings with the new API credentials to avoid disruptions.', 'smepay-for-woocommerce' ); ?></p>
+    </div>
+    <?php
+
+    // Mark notice as shown (won’t show again)
+    update_option( 'smepfowo_notice_dismissed', 'yes' );
+}
+add_action( 'admin_notices', 'smepfowo_upgrade_notice' );

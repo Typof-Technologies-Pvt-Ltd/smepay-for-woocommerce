@@ -2,21 +2,21 @@
 # This file is distributed under the GNU General Public License v3.0.
 msgid ""
 msgstr ""
-"Project-Id-Version: SMEPay for WooCommerce 1.0.0\n"
+"Project-Id-Version: SMEPay: UPI Gateway for WooCommerce 1.0.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/smepay-for-woocommerce\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-07-10T16:02:02+00:00\n"
+"POT-Creation-Date: 2025-10-16T10:04:55+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: smepay-for-woocommerce\n"
 
 #. Plugin Name of the plugin
 #: smepay-for-woocommerce.php
-msgid "SMEPay for WooCommerce"
+msgid "SMEPay: UPI Gateway for WooCommerce"
 msgstr ""
 
 #. Plugin URI of the plugin
@@ -39,194 +39,346 @@ msgstr ""
 msgid "https://profiles.wordpress.org/smepay"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:42
+#: includes/blocks/class-smepfowo-partial-cod-gateway-blocks-support.php:118
+#: includes/class-smepfowo-partial-cod-gateway.php:22
+msgid "Partial Payment with COD"
+msgstr ""
+
+#: includes/blocks/class-smepfowo-partial-cod-gateway-blocks-support.php:119
+#: includes/class-smepfowo-partial-cod-gateway.php:23
+msgid "Pay part now, rest on delivery."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:46
 msgctxt "SMEPay payment method"
 msgid "SMEPay UPI Payment"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:43
+#: includes/class-smepfowo-gateway.php:47
 msgid "Pay via UPI apps."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:73
+#: includes/class-smepfowo-gateway.php:82
 msgid "SMEPay:"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:74
+#: includes/class-smepfowo-gateway.php:83
 msgid "You are currently in Development Mode. Orders will use test credentials."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:257
+#: includes/class-smepfowo-gateway.php:310
 msgid "Enable/Disable"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:259
+#: includes/class-smepfowo-gateway.php:312
 msgid "Enable SMEPay Payments"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:264
+#: includes/class-smepfowo-gateway.php:317
 msgid "Hide at checkout for non-admin users"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:268
+#: includes/class-smepfowo-gateway.php:321
 msgid "Title"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:270
+#: includes/class-smepfowo-gateway.php:323
 msgid "This controls the title which the user sees during checkout."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:271
+#: includes/class-smepfowo-gateway.php:324
 msgctxt "SMEPay payment method"
 msgid "UPI Pay"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:275
+#: includes/class-smepfowo-gateway.php:328
 msgid "Description"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:277
+#: includes/class-smepfowo-gateway.php:330
 msgid "Payment method description that the customer will see on your checkout."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:278
-#: resources/js/frontend/smepfowo-block-checkout.js:10
+#: includes/class-smepfowo-gateway.php:331
 msgid "Secure by SMEPay."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:282
+#: includes/class-smepfowo-gateway.php:335
 msgid "Mode"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:284
+#: includes/class-smepfowo-gateway.php:337
 msgid "Select environment mode (Production or Development)"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:288
+#: includes/class-smepfowo-gateway.php:341
 msgid "Production"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:289
+#: includes/class-smepfowo-gateway.php:342
 msgid "Development"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:293
-msgid "Production Client ID"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:298
-msgid "Production Client Secret"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:303
-msgid "Development Client ID"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:308
-msgid "Development Client Secret"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:313
-msgid "Payment result"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:314
-msgid "Determine if order payments are successful when using this gateway."
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:318
-msgid "Success"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:319
-msgid "Failure"
-msgstr ""
-
-#: includes/class-smepfowo-gateway.php:333
-msgid "Payment method is currently unavailable. Please choose another method."
-msgstr ""
-
 #: includes/class-smepfowo-gateway.php:346
-msgid "Security check failed. Please refresh the page and try again."
+msgid "Display Mode"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:348
+msgid "Choose how the QR code should be displayed to the customer during checkout."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:352
+msgid "Popup Wizard (default)"
 msgstr ""
 
 #: includes/class-smepfowo-gateway.php:353
+msgid "Inline QR Code"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:357
+msgid "Production Client ID"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:362
+msgid "Production Client Secret"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:367
+msgid "Development Client ID"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:372
+msgid "Development Client Secret"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:377
+msgid "Payment result"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:378
+msgid "Determine if order payments are successful when using this gateway."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:382
+msgid "Success"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:383
+msgid "Failure"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:397
+msgid "Payment method is currently unavailable. Please choose another method."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:410
+msgid "Security check failed. Please refresh the page and try again."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:417
+#: includes/class-smepfowo-partial-cod-gateway.php:63
 msgid "Invalid order."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:359
+#: includes/class-smepfowo-gateway.php:423
 msgid "Failed to initiate SMEPay session. Please try again."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:392
+#: includes/class-smepfowo-gateway.php:445
+#: includes/class-smepfowo-partial-cod-gateway.php:99
+msgid "Failed to generate UPI QR code."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:484
 msgid "Order payment failed. Please review the gateway settings."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:393
+#: includes/class-smepfowo-gateway.php:485
 msgid "Order payment failed."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:553
+#: includes/class-smepfowo-gateway.php:780
 msgid "Payment confirmed via SMEPay."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:557
-#: includes/class-smepfowo-gateway.php:558
+#: includes/class-smepfowo-gateway.php:785
+#: includes/class-smepfowo-gateway.php:786
 msgid "Payment failed via SMEPay."
 msgstr ""
 
-#: smepay-for-woocommerce.php:117
+#: includes/class-smepfowo-partial-cod-gateway.php:24
+msgctxt "SMEPay payment method"
+msgid "Partial Payment with COD by SMEPay"
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:25
+msgid "Collect a small advance payment online via SMEPay, rest paid as Cash on Delivery."
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:52
+msgid "Advance Percentage"
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:54
+msgid "Percentage of the total order amount to be paid in advance using SMEPay."
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:77
+msgid "Failed to create partial SMEPay order. Try again."
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:144
+msgid "Unable to retrieve access token."
+msgstr ""
+
+#. translators: %1$s is the paid amount, %2$s is the remaining amount
+#: includes/class-smepfowo-partial-cod-gateway.php:265
+#: includes/class-smepfowo-webhook-handler.php:79
+msgid "Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery."
+msgstr ""
+
+#. translators: %1$s is the paid amount, %2$s is the remaining amount
+#: includes/class-smepfowo-partial-cod-gateway.php:272
+#: includes/class-smepfowo-webhook-handler.php:87
+msgid "Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD."
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:279
+msgid "Partial payment failed via SMEPay."
+msgstr ""
+
+#: includes/class-smepfowo-partial-cod-gateway.php:280
+msgid "Partial payment validation failed."
+msgstr ""
+
+#. translators: 1: paid amount (formatted), 2: remaining amount (formatted)
+#: includes/class-smepfowo-partial-cod-gateway.php:313
+msgid "Thank you! You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery. We will notify you when your order is out for delivery."
+msgstr ""
+
+#. translators: %1$s is the paid amount, %2$s is the remaining amount
+#: includes/class-smepfowo-partial-cod-gateway.php:347
+msgid "You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery."
+msgstr ""
+
+#. translators: 1: paid amount with currency, 2: total amount with currency, 3: remaining amount with currency
+#: includes/class-smepfowo-utils.php:60
+msgid "You have paid %1$s out of %2$s. Remaining %3$s is to be paid at COD."
+msgstr ""
+
+#: includes/class-smepfowo-webhook-handler.php:95
+msgid "SMEPay: Full payment confirmed."
+msgstr ""
+
+#: smepay-for-woocommerce.php:121
 msgid "SMEPay for WooCommerce:"
 msgstr ""
 
-#: smepay-for-woocommerce.php:118
+#: smepay-for-woocommerce.php:122
 msgid "SSL is required to use this payment gateway in production. Please enable SSL on your website for secure transactions."
 msgstr ""
 
-#: smepay-for-woocommerce.php:134
+#: smepay-for-woocommerce.php:138
 msgid "Settings"
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:9
-msgid "UPI Pay"
+#: smepay-for-woocommerce.php:212
+msgid "== SMEPay for WooCommerce Upgrade Notice =="
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:24
+#: smepay-for-woocommerce.php:213
+msgid "Version 1.0.2"
+msgstr ""
+
+#: smepay-for-woocommerce.php:214
+msgid "Critical update: Updated API endpoints and improved order status handling."
+msgstr ""
+
+#: smepay-for-woocommerce.php:215
+msgid "Important: You MUST obtain new API keys. Old API keys will no longer work."
+msgstr ""
+
+#: smepay-for-woocommerce.php:216
+msgid "Please update your plugin settings with the new API credentials to avoid disruptions."
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:109
+#: resources/js/frontend/smepfowo-classic-checkout.js:24
+msgid "Payment window expired"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:130
+#: resources/js/frontend/smepfowo-classic-checkout.js:39
+msgid "Time left: "
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:200
+msgid "Pay with UPI"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:205
+msgid "Securely powered by SMEPay."
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:223
 msgid "SMEPay Logo"
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:51
-msgid "Order is already paid. SMEPay widget will not be triggered."
-msgstr ""
-
-#: resources/js/frontend/smepfowo-block-checkout.js:62
+#: resources/js/frontend/smepfowo-block-checkout.js:301
 msgid "SMEPay widget closed or failed."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-block-checkout.js:66
-msgid "SMEPay slug missing. Widget will not trigger."
+#: resources/js/frontend/smepfowo-block-checkout.js:309
+msgid "SMEPay slug missing or checkout function unavailable."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:32
+#: resources/js/frontend/smepfowo-block-checkout.js:366
+#: resources/js/frontend/smepfowo-classic-checkout.js:211
+msgid "Scan this QR to Pay"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:418
+#: resources/js/frontend/smepfowo-classic-checkout.js:240
+msgid "Others"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-block-checkout.js:431
+#: resources/js/frontend/smepfowo-classic-checkout.js:223
+msgid "Pay using your UPI app"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-classic-checkout.js:31
+msgid "Retry Payment"
+msgstr ""
+
+#: resources/js/frontend/smepfowo-classic-checkout.js:111
+msgid "Missing payment configuration. Please refresh and try again."
+msgstr ""
+
+#: resources/js/frontend/smepfowo-classic-checkout.js:131
 msgid "Something went wrong."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:32
+#: resources/js/frontend/smepfowo-classic-checkout.js:131
 msgid "Please try again later."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:52
+#: resources/js/frontend/smepfowo-classic-checkout.js:154
 msgid "❌ SMEPay widget closed or failed."
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:56
+#: resources/js/frontend/smepfowo-classic-checkout.js:261
+msgid "UPI app links are currently unavailable."
+msgstr ""
+
+#: resources/js/frontend/smepfowo-classic-checkout.js:277
 msgid "⚠️ Unexpected response:"
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:60
+#: resources/js/frontend/smepfowo-classic-checkout.js:281
 msgid "🔥 AJAX error:"
 msgstr ""
 
-#: resources/js/frontend/smepfowo-classic-checkout.js:62
+#: resources/js/frontend/smepfowo-classic-checkout.js:283
 msgid "Unexpected error occurred. Please try again."
 msgstr ""
