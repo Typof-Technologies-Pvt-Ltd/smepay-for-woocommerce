@@ -88,6 +88,7 @@
 
   
   function smepfowoToggleLoader(show = true, methodId = '', useGlobalContainer = false) {
+    const supported = ['smepfowo', 'smepfowo_partial_cod'];
     let container;
 
     if (useGlobalContainer) {
@@ -99,6 +100,12 @@
       }
 
       if (!methodId) return;
+
+      // Only proceed if methodId is supported
+      if (!supported.includes(methodId)) {
+        console.warn(`[SMEPFOWO] Loader: Payment method "${methodId}" is not supported.`);
+        return;
+      }
 
       container = document.querySelector(`.payment_box.payment_method_${methodId}`);
     }
