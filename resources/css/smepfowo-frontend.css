@@ -43,6 +43,16 @@
   }
 }
 
+@keyframes smepfowo-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+li.payment_method_smepfowo img,
+li.payment_method_smepfowo_partial_cod img {
+  max-height: 2em;
+}
+
 
 /* ===============================
    🖼️ QR Code Styling (Classic Checkout)

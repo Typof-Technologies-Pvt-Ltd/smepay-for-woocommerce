@@ -86,6 +86,73 @@
     }
   }
 
+  
+  function smepfowoToggleLoader(show = true, methodId = '', useGlobalContainer = false) {
+    let container;
+
+    if (useGlobalContainer) {
+      container = document.getElementById('payment');
+    } else {
+      if (!methodId) {
+        const selectedInput = document.querySelector('input[name="payment_method"]:checked');
+        methodId = selectedInput?.value;
+      }
+
+      if (!methodId) return;
+
+      container = document.querySelector(`.payment_box.payment_method_${methodId}`);
+    }
+
+    if (!container) {
+      console.warn(`[SMEPFOWO] Loader: Could not find container for ${methodId || 'global'}`);
+      return;
+    }
+
+    let existingLoader = container.querySelector('.smepfowo-payment-loader');
+
+    if (show) {
+      if (!existingLoader) {
+        const loader = document.createElement('div');
+        loader.className = 'smepfowo-payment-loader';
+        loader.style.cssText = useGlobalContainer
+          ? `
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px 0;
+          `
+          : 'margin: 20px auto; text-align: center;';
+
+        loader.innerHTML = `
+          <div class="smepfowo-spinner" style="
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-top: 4px solid #000;
+            border-radius: 50%;
+            animation: smepfowo-spin 1s linear infinite;
+          "></div>
+        `;
+
+        // Insert at top if global
+        if (useGlobalContainer) {
+          container.insertBefore(loader, container.firstChild);
+        } else {
+          container.appendChild(loader);
+        }
+
+        console.log(`[SMEPFOWO] Loader shown in ${useGlobalContainer ? '#payment' : methodId}`);
+      }
+    } else {
+      if (existingLoader) {
+        existingLoader.remove();
+        console.log(`[SMEPFOWO] Loader removed from ${useGlobalContainer ? '#payment' : methodId}`);
+      }
+    }
+  }
+
+
+
 
 
   const startCountdownTimer = (container, durationSeconds = 300) => {
@@ -342,19 +409,27 @@
     const selectedMethod = selectedInput.value;
     if (!supportedMethods.includes(selectedMethod)) return;
 
-    if (!qrCode) {
-      console.warn('[SMEPFOWO] No QR code found.');
-      return;
-    }
-
     const container = document.querySelector(`.payment_box.payment_method_${selectedMethod}`);
     if (!container) {
       console.warn(`[SMEPFOWO] Could not find .payment_box.payment_method_${selectedMethod}`);
       return;
     }
 
-    // Prevent duplicate insertion
-    if (container.querySelector('.smepfowo-qr-code') || container.querySelector('h6.smepfowo-qr-heading')) return;
+    // Check if QR code or heading already exists
+    if (container.querySelector('.smepfowo-qr-code') || container.querySelector('h6.smepfowo-qr-heading')) {
+      smepfowoToggleLoader(false, '', true); // Hide
+      console.log('[SMEPFOWO] QR code already present, skipping insertion.');
+      return;
+    }
+
+    // Show loader before inserting
+    smepfowoToggleLoader(true, '', true); // Show
+
+    if (!qrCode) {
+      console.warn('[SMEPFOWO] No QR code found.');
+      smepfowoToggleLoader(false, '', true); // Hide
+      return;
+    }
 
     // Create heading
     const heading = document.createElement('h6');
@@ -374,11 +449,10 @@
 
     container.appendChild(heading);
     container.appendChild(img);
+
     // Start the 5-min countdown timer inside the same container
-    startCountdownTimer(container, 300);  // 300 seconds = 5 minutes
+    startCountdownTimer(container, 300);
   };
-
-
 
   const insertIntentsIntoClassicPaymentBox = () => {
     const selectedInput = document.querySelector('input[name="payment_method"]:checked');
@@ -396,43 +470,48 @@
     // Prevent duplicate insertion
     if (container.querySelector('.smepfowo-intents-mobile-only')) return;
 
-    const isMobile = window.innerWidth < 768;
-    if (!isMobile) return;
+    // Only show on mobile devices (screen width < 768px)
+    if (window.innerWidth >= 768) return;
 
     if (!intents || typeof intents !== 'object') {
       console.warn('[SMEPFOWO] No intents found.');
       return;
     }
 
+    // Icons for supported UPI apps
     const icons = {
       gpay: 'https://typof.co/gpay.png',
       phonepe: 'https://typof.co/phonepe.png',
       paytm: 'https://typof.co/paytm.png',
-      bhim: 'https://typof.co/bhim.png'
+      bhim: 'https://typof.co/bhim.png',
     };
 
+    // Labels for display
     const labels = {
       phonepe: 'PhonePe',
       gpay: 'GPay',
       paytm: 'Paytm',
-      bhim: __('Others', 'smepay-for-woocommerce')
+      bhim: __('Others', 'smepay-for-woocommerce'),
     };
 
+    // Preferred order of apps
     const orderedApps = ['phonepe', 'gpay', 'paytm', 'bhim'];
 
+    // Container wrapper
     const wrapper = document.createElement('div');
     wrapper.className = 'smepfowo-intents-mobile-only';
     wrapper.style.marginTop = '20px';
     wrapper.style.textAlign = 'center';
 
+    // Heading with dynamic amount (if any)
     const heading = document.createElement('h6');
-    heading.style.marginBottom = '12px'; // optional styling for spacing
-    // Add amount dynamically next to heading text
+    heading.style.marginBottom = '12px';
     heading.textContent = `${__('Pay using your UPI app', 'smepay-for-woocommerce')}${formattedAmount ? ` – ${formattedAmount}` : ''}`;
     wrapper.appendChild(heading);
 
+    // Grid container for app icons
     const grid = document.createElement('div');
-    grid.className = 'smepfowo-intents-grid'; // We'll define this in CSS
+    grid.className = 'smepfowo-intents-grid'; // Style in CSS as needed
 
     orderedApps.forEach((app) => {
       const link = intents[app];
@@ -468,9 +547,13 @@
 
     wrapper.appendChild(grid);
     container.appendChild(wrapper);
-    // Start the 5-min countdown timer inside the same container
-    startCountdownTimer(container, 300);  // 300 seconds = 5 minutes
+
+    // Start countdown timer inside this container for 5 minutes
+    startCountdownTimer(container, 300);
   };
+
+
+
 
   // Re-trigger widget when payment method is changed
   document.addEventListener('change', (e) => {
