@@ -511,10 +511,16 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            return null;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         // Save your generated order ID before sending request
         $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
@@ -584,10 +590,16 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            return null;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         $payload = [
             'slug'      => $slug,
@@ -642,10 +654,16 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return null;
         }
 
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            return null;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         $payload = [
             'order_id'  => $smepfowo_order_id,
@@ -680,6 +698,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
     /**
      * Get access token
+     *
+     * @return array Returns array with 'token' or 'error':
+     *               ['token' => '...'] on success
+     *               ['error' => '...'] on failure
      */
     protected function get_access_token() {
         $response = wp_remote_post(
@@ -698,15 +720,27 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
+        // Network / request errors
         if ( is_wp_error( $response ) ) {
-            return null;
+            return [ 'error' => $response->get_error_message() ];
         }
 
-        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        $status_code = wp_remote_retrieve_response_code( $response );
+        $body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        return $body['access_token'] ?? null;
+        // API returned an error
+        if ( isset( $body['error'] ) ) {
+            return [ 'error' => $body['error'] ];
+        }
+
+        // Access token available
+        if ( ! empty( $body['access_token'] ) ) {
+            return [ 'token' => $body['access_token'] ];
+        }
+
+        // Fallback unknown error
+        return [ 'error' => 'Unable to retrieve access token from SMEPay API.' ];
     }
-
     
     /**
      * Validate order on thank you page.
@@ -732,10 +766,16 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         }
 
         // Get access token
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            return;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         // Prepare request data
         $data = [

@@ -140,11 +140,16 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         $random    = wp_rand(1000, 9999);
         $new_order_id = "{$order_id}-{$timestamp}-{$random}";
 
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            wc_add_notice( __( 'Unable to retrieve access token.', 'smepay-for-woocommerce' ), 'error' );
-            return null;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         $payload = [
             'client_id'        => $this->client_id,
@@ -214,10 +219,16 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return;
         }
 
-        $token = $this->get_access_token();
-        if ( ! $token ) {
-            return;
+        $token_result = $this->get_access_token();
+
+        if ( empty( $token_result['token'] ) ) {
+            // Pass API error to WooCommerce notice
+            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [ 'result' => 'failure' ];
         }
+
+        $token = $token_result['token'];
 
         $slug = $order->get_meta( '_smepfowo_slug' );
         $partial_amount = $order->get_meta( '_smepfowo_partial_amount' );
