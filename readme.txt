@@ -4,7 +4,7 @@ Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 Requires PHP: 7.0
 Requires Plugins: woocommerce
 License: GPLv3 or later
@@ -127,6 +127,12 @@ This plugin interacts with the following SMEPay-hosted domains:
 
 == Changelog ==
 
+= 1.0.3 =
+* Added file existence checks before including required files to prevent fatal errors.
+* Improved plugin stability by handling missing files gracefully.
+* Minor code cleanup and optimizations for better maintainability.
+
+
 = 1.0.2 =
 * Added new api endpoints.
 * Fixed correct status and type casting for new API
@@ -142,6 +148,12 @@ This plugin interacts with the following SMEPay-hosted domains:
 * Customizable settings for store owners.
 
 == Upgrade Notice ==
+
+= 1.0.3 =
+* Fixed issue with loading required include files by adding checks for file existence before requiring them.
+* Improved plugin stability to prevent fatal errors when files are missing.
+* Recommended update for all users to ensure smoother plugin operation.
+
 
 = 1.0.2 =
 * Critical update: Updated API endpoints and improved order status handling. Recommended for all users to ensure compatibility with latest SMEPay API.

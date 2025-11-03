@@ -4,7 +4,7 @@ use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodTyp
 /**
  * SMEPay Payments Blocks integration. 
  *
- * @since 1.0.0
+ * @since 1.0.2
  */
 final class SMEPFOWO_Partial_COD_Gateway_Blocks_Support extends AbstractPaymentMethodType {
 

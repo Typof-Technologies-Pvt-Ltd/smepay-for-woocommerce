@@ -578,37 +578,30 @@
 
   });
 
-  setTimeout(() => {
-    let preferredMethod = null;
+    window.addEventListener('load', () => {
+      let preferredMethod = null;
 
-    if (smepfowoSlug) {
-      preferredMethod = 'smepfowo';
-    }
-
-    if (smepfowoPartialCODSlug) {
-      preferredMethod = 'smepfowo_partial_cod';
-    }
-
-    if (!preferredMethod) {
-      console.warn('[SMEPFOWO] No valid slug found to select payment method.');
-      return;
-    }
-
-    const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
-
-    if (input) {
-      input.click();
-      if (typeof insertQRCodeIntoClassicPaymentBox === 'function') {
-        insertQRCodeIntoClassicPaymentBox();
+      if (smepfowoSlug) {
+        preferredMethod = 'smepfowo';
+      } else if (smepfowoPartialCODSlug) {
+        preferredMethod = 'smepfowo_partial_cod';
       }
-      if (typeof insertIntentsIntoClassicPaymentBox === 'function') {
-        insertIntentsIntoClassicPaymentBox();
+
+      if (!preferredMethod) {
+        console.warn('[SMEPFOWO] No valid slug found to select payment method.');
+        return;
       }
-      if (typeof debounceTrigger === 'function') {
-        debounceTrigger();
+
+      const input = document.querySelector(`input[name="payment_method"][value="${preferredMethod}"]`);
+      if (input) {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+        insertQRCodeIntoClassicPaymentBox?.();
+        insertIntentsIntoClassicPaymentBox?.();
+        debounceTrigger?.();
+      } else {
+        console.warn(`[SMEPFOWO] Payment method input not found: ${preferredMethod}`);
       }
-    } else {
-      console.warn(`[SMEPFOWO] Payment method input not found: ${preferredMethod}`);
-    }
-  }, 10000);
+  });
+  
 })();

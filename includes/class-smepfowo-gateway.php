@@ -427,6 +427,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Optional inline QR support
         $qr_code = '';
         $payment_link = '';
+        $intents = [];
 
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
@@ -522,7 +523,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Prepare payload
         $payload = [
             'client_id'        => $this->client_id,
-            'amount'           => number_format( (float) $order->get_total(), 2, '.', '' ),
+            'amount'           => (string) number_format( (float) $order->get_total(), 2, '.', '' ),
             'order_id'         => $new_order_id,
             'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
             'customer_details' => [
@@ -739,7 +740,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         // Prepare request data
         $data = [
             'client_id' => $this->client_id,
-            'amount'    => number_format( (float) $order->get_total(), 2, '.', '' ),
+            'amount'    => round( (float) $order->get_total(), 2 ),
             'slug'      => $order->get_meta( '_smepfowo_slug' ),
         ];
 

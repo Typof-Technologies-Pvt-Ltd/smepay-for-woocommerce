@@ -3,7 +3,7 @@
  * Plugin Name: SMEPay: UPI Gateway for WooCommerce
  * Plugin URI:  https://smepay.io
  * Description: Accept UPI payments via SMEPay with QR code widget on your WooCommerce website.
- * Version:     1.0.2
+ * Version:     1.0.3
  * Author:      SMEPay
  * Author URI:  https://profiles.wordpress.org/smepay
  * Text Domain: smepay-for-woocommerce
@@ -28,7 +28,7 @@ class SMEPFOWO_Plugin {
 
 
     // Define plugin version
-    const VERSION = '1.0.2';
+    const VERSION = '1.0.3';
 
     /**
      * @var SMEPFOWO_Plugin|null Holds the singleton instance.
@@ -200,7 +200,7 @@ if (
 }
 
 function smepfowo_upgrade_notice() {
-    $current_version = '1.0.2';
+    $current_version = '1.0.3';
 
     // Check if dismissed
     if ( get_option( 'smepfowo_notice_dismissed' ) === 'yes' ) {
@@ -210,7 +210,7 @@ function smepfowo_upgrade_notice() {
     ?>
     <div class="notice notice-error is-dismissible">
         <p><strong><?php esc_html_e( '== SMEPay for WooCommerce Upgrade Notice ==', 'smepay-for-woocommerce' ); ?></strong></p>
-        <p><strong><?php esc_html_e( 'Version 1.0.2', 'smepay-for-woocommerce' ); ?></strong></p>
+        <p><strong><?php esc_html_e( 'Version 1.0.3', 'smepay-for-woocommerce' ); ?></strong></p>
         <p><?php esc_html_e( 'Critical update: Updated API endpoints and improved order status handling.', 'smepay-for-woocommerce' ); ?></p>
         <p><strong><?php esc_html_e( 'Important: You MUST obtain new API keys. Old API keys will no longer work.', 'smepay-for-woocommerce' ); ?></strong></p>
         <p><?php esc_html_e( 'Please update your plugin settings with the new API credentials to avoid disruptions.', 'smepay-for-woocommerce' ); ?></p>

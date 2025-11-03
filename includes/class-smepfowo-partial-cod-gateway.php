@@ -81,6 +81,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         // Optional inline QR support
         $qr_code = '';
         $payment_link = '';
+        $intents = [];
 
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
@@ -147,7 +148,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         $payload = [
             'client_id'        => $this->client_id,
-            'amount'           => (string) $amount,
+            'amount'           => (string) number_format( (float) $amount, 2, '.', '' ),
             'order_id'         => $new_order_id,
             'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
             'customer_details' => [
@@ -222,7 +223,8 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         $partial_amount = $order->get_meta( '_smepfowo_partial_amount' );
 
         if ( ! $partial_amount ) {
-            $partial_amount = round( $order->get_total() * $this->partial_payment_percent / 100, 2 );
+            $partial_percent = absint( $this->get_option( 'partial_percentage', 30 ) );
+            $partial_amount = round( $order->get_total() * ( $partial_percent / 100 ), 2 );
         }
 
         $total_amount  = (float) $order->get_total();
@@ -230,7 +232,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         $data = [
             'client_id' => $this->client_id,
-            'amount'    => (float) $partial_amount,
+            'amount' => round( (float) $partial_amount, 2 ),
             'slug'      => $slug,
         ];
 

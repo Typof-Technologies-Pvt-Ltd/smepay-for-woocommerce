@@ -3,6 +3,17 @@ const { __ } = wp.i18n;
 jQuery(function ($) {
   const $form = $('form.checkout');
 
+  let smepfowo_user_triggered_checkout = false;
+
+  // ✅ Track when user actually clicks the place order button
+  $('#place_order').on('click', function () {
+    smepfowo_user_triggered_checkout = true;
+  });
+
+  $(document).on('change', 'input[name="payment_method"]', function () {
+    smepfowo_user_triggered_checkout = false;
+  });
+
   function startCountdownTimer(container, durationSeconds = 300) {
     // Prevent duplicate timers
     if (container.querySelector('.smepfowo-countdown-timer')) return;
@@ -87,6 +98,11 @@ jQuery(function ($) {
     // Optionally, you can re-render QR or intents here if needed
     const selectedMethod = $('input[name="payment_method"]:checked').val();
     if (['smepfowo', 'smepfowo_partial_cod'].includes(selectedMethod)) {
+      // 🚫 Don't trigger if the user hasn't clicked Place Order yet
+      if (!smepfowo_user_triggered_checkout) {
+        console.log('[SMEPay] Skipping trigger – user has not initiated checkout.');
+        return;
+      }
       // You must re-trigger the Ajax to load the QR and intents again
       $('form.checkout').trigger(`checkout_place_order_${selectedMethod}`);
     }
@@ -211,7 +227,7 @@ jQuery(function ($) {
                       ${__('Scan this QR to Pay', 'smepay-for-woocommerce')}
                       ${amount ? ` – ${amount}` : ''}
                     </h6>
-                    <img class="smepfowo-qr-image" src="data:image/png;base64,${response.qr_code}" alt="QR Code" style="max-width: 250px;" />
+                    <img class="smepfowo-qr-image" src="data:image/png;base64,${response.qr_code}" alt="QR Code" style="max-width: 250px; max-height: 250px;" />
                   `;
                 }
 
