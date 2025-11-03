@@ -418,11 +418,15 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return [ 'result' => 'failure' ];
         }
 
-        $slug = $this->smepfowo_create_order( $order );
-        if ( ! $slug ) {
-            wc_add_notice( __( 'Failed to initiate SMEPay session. Please try again.', 'smepay-for-woocommerce' ), 'error' );
+        $result = $this->smepfowo_create_order( $order );
+
+        if ( empty( $result['slug'] ) ) {
+            $error_message = $result['error'] ?? 'Failed to initiate SMEPay session. Please try again.';
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
             return [ 'result' => 'failure' ];
         }
+
+        $slug = $result['slug'];
 
         // Optional inline QR support
         $qr_code = '';
@@ -498,8 +502,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * @return string|null SMEPay order slug or null on failure.
      */
     protected function smepfowo_create_order( $order ) {
-        $log_prefix = '[SMEPay Create Order] ';
-
         $order_id  = (string) $order->get_id();
         $timestamp = time();
         $random    = wp_rand(1000, 9999);
@@ -522,11 +524,10 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $token = $token_result['token'];
 
-        // Save your generated order ID before sending request
+
         $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
         $order->save();
 
-        // Prepare payload
         $payload = [
             'client_id'        => $this->client_id,
             'amount'           => (string) number_format( (float) $order->get_total(), 2, '.', '' ),
@@ -553,15 +554,21 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
+        // Handle request errors
         if ( is_wp_error( $response ) ) {
-            return null;
+            return [ 'error' => $response->get_error_message() ];
         }
 
         $status_code = wp_remote_retrieve_response_code( $response );
-        $raw_body    = wp_remote_retrieve_body( $response );
-        $body        = json_decode( $raw_body, true );
+        $body        = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        // Update the meta with the real SMEPay order_id if returned
+        // Handle API-level errors
+        if ( isset( $body['error'] ) ) {
+            // SMEPay might return { "error": "Invalid amount" } or similar
+            return [ 'error' => $body['error'] ];
+        }
+
+        // Save the real order_id if returned
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
             $order->save();
@@ -572,11 +579,11 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( is_string( $slug ) && $slug !== '' ) {
             $order->update_meta_data( '_smepfowo_slug', $slug );
             $order->save();
-            return $slug;
+            return [ 'slug' => $slug ];
         }
-        return null;
-    }
 
+        return [ 'error' => 'Unknown API error' ];
+    }
 
 
     /**
