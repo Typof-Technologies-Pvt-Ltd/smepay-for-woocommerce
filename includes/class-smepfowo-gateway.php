@@ -424,10 +424,17 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $result = $this->smepfowo_create_order( $order );
 
         if ( empty( $result['success'] ) ) {
-            $error_message = $result['error'] ?? 'Failed to initiate SMEPay session. Please try again.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            if ( ! empty( $result['error'] ) ) {
+                // translators: %s is the API error message returned by SMEPay.
+                $error_message = sprintf( __( 'Failed to initiate SMEPay session: %s', 'smepay-for-woocommerce' ), $result['error'] );
+            } else {
+                $error_message = __( 'Failed to initiate SMEPay session. Please try again.', 'smepay-for-woocommerce' );
+            }
+
+            wc_add_notice( $error_message, 'error' );
             return [ 'result' => 'failure' ];
         }
+
 
         $slug = $result['slug'] ?? '';
         $qr_code = '';
@@ -443,8 +450,14 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 $payment_link = $initiate['payment_link'] ?? '';
                 $intents      = $initiate['intents'] ?? [];
             } else {
-                $error_message = $initiate['error'] ?? 'Failed to generate UPI QR code.';
-                wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+                if ( ! empty( $initiate['error'] ) ) {
+                    // translators: %s is the API error message returned by SMEPay.
+                    $error_message = sprintf( __( 'Failed to generate UPI QR code: %s', 'smepay-for-woocommerce' ), $initiate['error'] );
+                } else {
+                    $error_message = __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' );
+                }
+
+                wc_add_notice( $error_message, 'error' );
                 return [ 'result' => 'failure' ];
             }
         }
@@ -611,8 +624,18 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $token_result = $this->get_access_token();
 
         if ( empty( $token_result['token'] ) ) {
-            $error_message = $token_result['error'] ?? 'Failed to get access token.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            if ( ! empty( $token_result['error'] ) ) {
+                $error_message = sprintf(
+                    // translators: %s is the error message returned while fetching the access token.
+                    __( 'Failed to get access token: %s', 'smepay-for-woocommerce' ),
+                    $token_result['error']
+                );
+            } else {
+                $error_message = __( 'Failed to get access token.', 'smepay-for-woocommerce' );
+            }
+
+            wc_add_notice( $error_message, 'error' );
+
             return [
                 'status' => false,
                 'error'  => $error_message,
@@ -640,12 +663,19 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         if ( is_wp_error( $response ) ) {
             $error_message = $response->get_error_message();
-            wc_add_notice( __( 'SMEPay request failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
+
+            wc_add_notice( sprintf(
+                // translators: %s is the error message returned by SMEPay.
+                __( 'SMEPay request failed: %s', 'smepay-for-woocommerce' ),
+                $error_message
+            ), 'error' );
+
             return [
                 'status' => false,
                 'error'  => $error_message,
             ];
         }
+
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
@@ -653,8 +683,15 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return $body;
         }
 
-        $error_message = $body['error'] ?? 'Failed to initiate SMEPay payment.';
-        wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+        if ( ! empty( $body['error'] ) ) {
+            // translators: %s is the error message returned by SMEPay.
+            $error_message = sprintf( __( 'Failed to initiate SMEPay payment: %s', 'smepay-for-woocommerce' ), $body['error'] );
+        } else {
+            $error_message = __( 'Failed to initiate SMEPay payment.', 'smepay-for-woocommerce' );
+        }
+
+        wc_add_notice( $error_message, 'error' );
+
 
         return [
             'status' => false,
@@ -843,13 +880,20 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $token_result = $this->get_access_token();
 
         if ( empty( $token_result['token'] ) ) {
-            $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            if ( ! empty( $token_result['error'] ) ) {
+                // translators: %s is the error message returned while fetching the access token.
+                $error_message = sprintf( __( 'Failed to get access token: %s', 'smepay-for-woocommerce' ), $token_result['error'] );
+            } else {
+                $error_message = __( 'Failed to get access token.', 'smepay-for-woocommerce' );
+            }
+
             // Add WooCommerce notice for the user
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            wc_add_notice( $error_message, 'error' );
             // Add order note for admin/debugging
-            $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+            $order->add_order_note( $error_message );
             return;
         }
+
 
         $token = $token_result['token'];
 
@@ -874,10 +918,18 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         if ( is_wp_error( $response ) ) {
             $error_message = $response->get_error_message();
-            wc_add_notice( __( 'SMEPay validation failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
-            $order->add_order_note( sprintf( __( 'SMEPay connection error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+
+            // translators: %s is the error message returned by SMEPay.
+            $notice_message = sprintf( __( 'SMEPay validation failed: %s', 'smepay-for-woocommerce' ), $error_message );
+            wc_add_notice( $notice_message, 'error' );
+
+            // translators: %s is the error message returned by SMEPay.
+            $order_note = sprintf( __( 'SMEPay connection error: %s', 'smepay-for-woocommerce' ), $error_message );
+            $order->add_order_note( $order_note );
+
             return;
         }
+
 
         $decoded_response = json_decode( wp_remote_retrieve_body( $response ), true );
 
@@ -889,18 +941,26 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
                 }
             } else {
                 // API returned failure with optional error message
-                $api_error = $decoded_response['error'] ?? 'Payment failed via SMEPay.';
+                $api_error = $decoded_response['error'] ?? __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' );
+
                 if ( $order->get_status() !== 'failed' ) {
-                    $order->update_status( 'failed', __( $api_error, 'smepay-for-woocommerce' ) );
+                    // translators: %s is the API error message returned by SMEPay.
+                    $order->update_status( 'failed', sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $api_error ) );
+
+                    // translators: %s is the API error message returned by SMEPay.
                     $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $api_error ) );
                 }
-                wc_add_notice( __( $api_error, 'smepay-for-woocommerce' ), 'error' );
+                
+                // translators: $api_error contains the API error returned by SMEPay.
+                wc_add_notice( $api_error, 'error' );
+
             }
         } else {
             // Unexpected API response
-            $error_message = 'Invalid response from SMEPay API.';
+            $error_message = __( 'Invalid response from SMEPay API.', 'smepay-for-woocommerce' );
+            // translators: %s is the error message returned by SMEPay API.
             $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            wc_add_notice( $error_message, 'error' );
         }
     }
 
