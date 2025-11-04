@@ -41,7 +41,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         add_action( 'wp_ajax_nopriv_check_smepfowo_order_status', [ $this, 'ajax_check_smepfowo_order_status' ] );
 
 
-        add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_order_request' ], 10, 1 );
+        add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_partial_order_request' ], 10, 1 );
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
     }
 
@@ -213,7 +213,13 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
     }
 
 
-    public function send_validate_order_request( $order_id ) {
+    /**
+     * Validate partial order payment on thank you page.
+     *
+     * @param int $order_id WooCommerce order ID.
+     * @return array|null Returns result array on failure or null on success.
+     */
+    public function send_validate_partial_order_request( $order_id ) {
         $order = wc_get_order( $order_id );
 
         if ( ! $order ) {
@@ -228,31 +234,33 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return;
         }
 
+        // Get access token
         $token_result = $this->get_access_token();
-
         if ( empty( $token_result['token'] ) ) {
-            // Pass API error to WooCommerce notice
-            $error_message = $token_result['error'] ?? 'Failed to get access token.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            $error_message = $token_result['error'] ?? __( 'Failed to get access token.', 'smepay-for-woocommerce' );
+            wc_add_notice( $error_message, 'error' );
+            $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
             return [ 'result' => 'failure' ];
         }
 
         $token = $token_result['token'];
 
-        $slug = $order->get_meta( '_smepfowo_slug' );
+        $slug           = $order->get_meta( '_smepfowo_slug' );
         $partial_amount = $order->get_meta( '_smepfowo_partial_amount' );
 
+        // Calculate partial amount if missing
         if ( ! $partial_amount ) {
             $partial_percent = absint( $this->get_option( 'partial_percentage', 30 ) );
-            $partial_amount = round( $order->get_total() * ( $partial_percent / 100 ), 2 );
+            $partial_amount  = round( $order->get_total() * ( $partial_percent / 100 ), 2 );
         }
 
-        $total_amount  = (float) $order->get_total();
-        $amount_left   = $total_amount - $partial_amount;
+        $total_amount = (float) $order->get_total();
+        $amount_left  = max( 0, $total_amount - $partial_amount );
 
+        // Prepare payload
         $data = [
             'client_id' => $this->client_id,
-            'amount' => round( (float) $partial_amount, 2 ),
+            'amount'    => round( (float) $partial_amount, 2 ),
             'slug'      => $slug,
         ];
 
@@ -270,41 +278,51 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
-            return;
+            $error_message = $response->get_error_message();
+            wc_add_notice( __( 'SMEPay validation failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
+            $order->add_order_note( sprintf( __( 'SMEPay connection error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+            return [ 'result' => 'failure' ];
         }
 
-        $body    = wp_remote_retrieve_body( $response );
-        $decoded = json_decode( $body, true );
+        $decoded = json_decode( wp_remote_retrieve_body( $response ), true );
 
         if (
             isset( $decoded['status'], $decoded['payment_status'] ) &&
             $decoded['status'] &&
             in_array( $decoded['payment_status'], [ 'SUCCESS', 'TEST_SUCCESS' ], true )
         ) {
-            if ( $order->get_status() !== 'processing' ) {
+            // Partial payment successful
+            if ( $order->get_status() !== 'processing' && $amount_left > 0 ) {
                 $order->update_status( 'processing', sprintf(
-                    // translators: %1$s is the paid amount, %2$s is the remaining amount
                     __( 'Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery.', 'smepay-for-woocommerce' ),
                     wc_price( $partial_amount ),
                     wc_price( $amount_left )
                 ) );
 
                 $order->add_order_note( sprintf(
-                    // translators: %1$s is the paid amount, %2$s is the remaining amount
                     __( 'Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD.', 'smepay-for-woocommerce' ),
                     wc_price( $partial_amount ),
                     wc_price( $amount_left )
                 ) );
             }
-        } else {
-            if ( $order->get_status() !== 'failed' ) {
-                $order->update_status( 'failed', __( 'Partial payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
-                $order->add_order_note( __( 'Partial payment validation failed.', 'smepay-for-woocommerce' ) );
+
+            // If partial amount equals total, mark order complete
+            if ( $amount_left <= 0 && $order->get_status() !== 'completed' ) {
+                $order->payment_complete();
+                $order->add_order_note( __( 'Full payment received via SMEPay.', 'smepay-for-woocommerce' ) );
             }
+
+        } else {
+            // Partial payment failed
+            $api_error = $decoded['error'] ?? __( 'Partial payment failed via SMEPay.', 'smepay-for-woocommerce' );
+            if ( $order->get_status() !== 'failed' ) {
+                $order->update_status( 'failed', $api_error );
+                $order->add_order_note( sprintf( __( 'SMEPay partial payment error: %s', 'smepay-for-woocommerce' ), $api_error ) );
+            }
+            wc_add_notice( $api_error, 'error' );
+            return [ 'result' => 'failure' ];
         }
     }
-
-
 
 
     public function is_available() {
