@@ -75,11 +75,7 @@ trait SMEPFOWO_Utils {
     /**
 	 * AJAX handler to check the SME Pay for WooCommerce order payment status.
 	 *
-	 * This function responds to AJAX requests from the frontend or backend
-	 * to check the current payment status of an order (e.g., for partial or COD payments).
-	 *
-	 * It validates the nonce, retrieves the order ID from the POST request,
-	 * and calls the internal method to get the payment status.
+	 * Responds to AJAX requests to check the current payment status of an order.
 	 *
 	 * Sends a JSON response:
 	 * - success: with payment status info
@@ -87,8 +83,9 @@ trait SMEPFOWO_Utils {
 	 *
 	 * @return void Outputs JSON and terminates execution via wp_send_json_*()
 	 */
-    public function ajax_check_smepfowo_order_status() {
+	public function ajax_check_smepfowo_order_status() {
 
+	    // Verify nonce for security
 	    check_ajax_referer( 'smepfowo_nonce_action', 'nonce' );
 
 	    $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
@@ -97,44 +94,46 @@ trait SMEPFOWO_Utils {
 	        wp_send_json_error( [ 'message' => 'Invalid order ID.' ] );
 	    }
 
+	    // Get the WooCommerce order
 	    $order = wc_get_order( $order_id );
 	    if ( ! $order ) {
 	        wp_send_json_error( [ 'message' => 'Order not found.' ] );
 	    }
 
+	    // Check payment status via internal method
 	    $result = $this->smepfowo_check_order_status( $order_id );
 
-	    if ( $result['status'] ?? false ) {
+	    if ( ! empty( $result['status'] ) ) {
 	        $status = $result['payment_status'] ?? '';
-
-	        // Determine if payment was successful
 	        $is_paid = in_array( $status, [ 'SUCCESS', 'TEST_SUCCESS' ], true );
 
-	        // Load stored meta (if available)
+	        // Load order meta if needed
 	        $slug         = $order->get_meta( '_smepfowo_slug' );
 	        $payment_link = $order->get_meta( '_smepfowo_payment_link' );
 
-	        // Generate base thank you URL
-	        $redirect_url = $is_paid ? $order->get_checkout_order_received_url() : '';
-
-	        // Append custom query params
-	        $thank_you_url = $is_paid ? add_query_arg(
-	            [
-	                'smepfowo_slug' => $slug,
-	                'payment_link'  => urlencode( $payment_link ),
-	            ],
-	            $redirect_url
-	        ) : '';
+	        // Build thank you URL if payment is successful
+	        $thank_you_url = '';
+	        if ( $is_paid ) {
+	            $thank_you_url = add_query_arg(
+	                [
+	                    'smepfowo_slug' => $slug,
+	                    'payment_link'  => urlencode( $payment_link ),
+	                ],
+	                $order->get_checkout_order_received_url()
+	            );
+	        }
 
 	        wp_send_json_success( [
 	            'status'       => $status,
 	            'is_paid'      => $is_paid,
 	            'redirect_url' => $thank_you_url,
+	            'raw'          => $result['raw'] ?? [], // optional: for debugging or frontend use
 	        ] );
 	    }
 
-	    // Send API error message if available
+	    // Send API error if payment status failed or API returned error
 	    $error_message = $result['error'] ?? 'Unable to retrieve payment status.';
 	    wp_send_json_error( [ 'message' => $error_message ] );
 	}
+
 }
