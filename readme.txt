@@ -58,6 +58,12 @@ Currently, SMEPay supports only one-time payments via UPI. For recurring payment
 = Is my payment and data secure when using SMEPay? =
 Yes. SMEPay uses secure, authenticated API communication. The plugin shares only the transaction data necessary for payment processing after the customer selects SMEPay at checkout. No additional personal data is collected or stored.
 
+= Can I use both Inline QR and Wizard QR display modes together? =
+No. You can only use one display mode at a time — either Inline QR or Wizard (popup) mode.
+This restriction applies to both the full SMEPay payment gateway and the Partial COD gateway.
+If Inline QR is enabled in settings, the Wizard display will be automatically disabled, and vice-versa.
+This ensures stable behavior and prevents conflicts between checkout rendering methods.
+
 == External Services ==
 
 This plugin connects to the SMEPay platform, a third-party UPI payment service provided by Typof Technologies, to enable UPI payments in your WooCommerce store.
