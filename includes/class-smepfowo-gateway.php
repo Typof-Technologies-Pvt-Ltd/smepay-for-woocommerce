@@ -436,18 +436,19 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
 
-            if ( $initiate && ! empty( $initiate['qr_code'] ) ) {
-                $qr_code       = $initiate['qr_code'];
-                $payment_link  = $initiate['payment_link'] ?? '';
-                $intents = $initiate['intents'] ?? [];
-                
+            if ( $initiate['status'] ?? false ) {
+                $qr_code      = $initiate['qr_code'];
+                $payment_link = $initiate['payment_link'] ?? '';
+                $intents      = $initiate['intents'] ?? [];
+
                 // Store for reference
                 $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
                 $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
                 $order->update_meta_data( '_smepfowo_intents', $intents );
                 $order->save();
             } else {
-                wc_add_notice( __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' ), 'error' );
+                $error_message = $initiate['error'] ?? 'Failed to generate UPI QR code.';
+                wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
                 return [ 'result' => 'failure' ];
             }
         }
@@ -594,16 +595,21 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      */
     protected function smepfowo_initiate_payment( $slug ) {
         if ( empty( $slug ) || empty( $this->client_id ) ) {
-            return null;
+            return [
+                'status' => false,
+                'error'  => 'Invalid slug or client ID.',
+            ];
         }
 
         $token_result = $this->get_access_token();
 
         if ( empty( $token_result['token'] ) ) {
-            // Pass API error to WooCommerce notice
             $error_message = $token_result['error'] ?? 'Failed to get access token.';
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
-            return [ 'result' => 'failure' ];
+            return [
+                'status' => false,
+                'error'  => $error_message,
+            ];
         }
 
         $token = $token_result['token'];
@@ -625,9 +631,13 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
-
         if ( is_wp_error( $response ) ) {
-            return null;
+            $error_message = $response->get_error_message();
+            wc_add_notice( __( 'SMEPay request failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
+            return [
+                'status' => false,
+                'error'  => $error_message,
+            ];
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -636,8 +646,15 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return $body;
         }
 
-        return null;
+        $error_message = $body['error'] ?? 'Failed to initiate SMEPay payment.';
+        wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+
+        return [
+            'status' => false,
+            'error'  => $error_message,
+        ];
     }
+
 
     /**
      * Check SMEPay order payment status.

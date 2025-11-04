@@ -86,10 +86,10 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
 
-            if ( $initiate && ! empty( $initiate['qr_code'] ) ) {
-                $qr_code       = $initiate['qr_code'];
-                $payment_link  = $initiate['payment_link'] ?? '';
-                $intents = $initiate['intents'] ?? [];
+            if ( $initiate['status'] ?? false ) {
+                $qr_code      = $initiate['qr_code'];
+                $payment_link = $initiate['payment_link'] ?? '';
+                $intents      = $initiate['intents'] ?? [];
                 
                 // Store for reference
                 $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
@@ -97,7 +97,8 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
                 $order->update_meta_data( '_smepfowo_intents', $intents );
                 $order->save();
             } else {
-                wc_add_notice( __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' ), 'error' );
+                $error_message = $initiate['error'] ?? 'Failed to generate UPI QR code.';
+                wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
                 return [ 'result' => 'failure' ];
             }
         }
