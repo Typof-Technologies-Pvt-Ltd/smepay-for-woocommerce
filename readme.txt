@@ -166,7 +166,6 @@ This plugin interacts with the following SMEPay-hosted domains:
 * Fixed issue where full order validation ran for partial COD payments.
 * Improved thank-you page validation to correctly handle partial and full payments separately.
 * Enhanced overall gateway reliability and internal hook handling.
-* Recommended update for all stores using SMEPay Partial COD or inline QR checkout.
 
 
 = 1.0.3 =

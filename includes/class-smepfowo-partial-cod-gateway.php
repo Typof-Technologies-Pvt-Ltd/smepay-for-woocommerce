@@ -18,13 +18,13 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         // Call parent constructor to load base settings
         parent::__construct();
 
-        // 🧠 Reload settings with new ID to ensure correct values are fetched
+        // Reload settings with new ID to ensure correct values are fetched
         $this->title              = $this->get_option( 'title', __( 'Partial Payment with COD', 'smepay-for-woocommerce' ) );
         $this->description        = $this->get_option( 'description', __( 'Pay part now, rest on delivery.', 'smepay-for-woocommerce' ) );
         $this->method_title       = _x( 'Partial Payment with COD by SMEPay', 'SMEPay payment method', 'smepay-for-woocommerce' );
         $this->method_description = __( 'Collect a small advance payment online via SMEPay, rest paid as Cash on Delivery.', 'smepay-for-woocommerce' );
 
-        // 🔄 Load credentials from settings manually, using the correct ID
+        // Load credentials from settings manually, using the correct ID
         $this->mode = strtolower( trim( $this->get_option( 'mode', 'production' ) ) );
         $this->client_id = $this->mode === 'development'
             ? $this->get_option( 'dev_client_id' )
@@ -239,6 +239,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         if ( empty( $token_result['token'] ) ) {
             $error_message = $token_result['error'] ?? __( 'Failed to get access token.', 'smepay-for-woocommerce' );
             wc_add_notice( $error_message, 'error' );
+            // translators: %s is the error message returned by SMEPay API.
             $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
             return [ 'result' => 'failure' ];
         }
@@ -279,10 +280,16 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         if ( is_wp_error( $response ) ) {
             $error_message = $response->get_error_message();
-            wc_add_notice( __( 'SMEPay validation failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
+
+            // translators: %s is the error message returned by SMEPay API.
+            wc_add_notice( sprintf( __( 'SMEPay validation failed: %s', 'smepay-for-woocommerce' ), $error_message ), 'error' );
+
+            // translators: %s is the error message returned by SMEPay API.
             $order->add_order_note( sprintf( __( 'SMEPay connection error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+
             return [ 'result' => 'failure' ];
         }
+
 
         $decoded = json_decode( wp_remote_retrieve_body( $response ), true );
 
@@ -293,32 +300,51 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         ) {
             // Partial payment successful
             if ( $order->get_status() !== 'processing' && $amount_left > 0 ) {
-                $order->update_status( 'processing', sprintf(
-                    __( 'Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery.', 'smepay-for-woocommerce' ),
-                    wc_price( $partial_amount ),
-                    wc_price( $amount_left )
-                ) );
 
-                $order->add_order_note( sprintf(
-                    __( 'Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD.', 'smepay-for-woocommerce' ),
-                    wc_price( $partial_amount ),
-                    wc_price( $amount_left )
-                ) );
+                $order->update_status(
+                    'processing',
+                    sprintf(
+                        // translators: %1$s is the partial amount paid, %2$s is the remaining amount to be collected on delivery.
+                        __( 'Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery.', 'smepay-for-woocommerce' ),
+                        wc_price( $partial_amount ),
+                        wc_price( $amount_left )
+                    )
+                );
+
+
+                $order->add_order_note(
+                    sprintf(
+                        // translators: %1$s is the partial amount paid, %2$s is the remaining amount for COD.
+                        __( 'Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD.', 'smepay-for-woocommerce' ),
+                        wc_price( $partial_amount ),
+                        wc_price( $amount_left )
+                    )
+                );
             }
+
 
             // If partial amount equals total, mark order complete
             if ( $amount_left <= 0 && $order->get_status() !== 'completed' ) {
                 $order->payment_complete();
+
+                // translators: Note added to the order when full payment is received via SMEPay.
                 $order->add_order_note( __( 'Full payment received via SMEPay.', 'smepay-for-woocommerce' ) );
             }
 
         } else {
             // Partial payment failed
             $api_error = $decoded['error'] ?? __( 'Partial payment failed via SMEPay.', 'smepay-for-woocommerce' );
+
             if ( $order->get_status() !== 'failed' ) {
                 $order->update_status( 'failed', $api_error );
-                $order->add_order_note( sprintf( __( 'SMEPay partial payment error: %s', 'smepay-for-woocommerce' ), $api_error ) );
+
+                $order->add_order_note( sprintf(
+                    // translators: %s is the API error message returned by SMEPay.
+                    __( 'SMEPay partial payment error: %s', 'smepay-for-woocommerce' ),
+                    $api_error
+                ) );
             }
+
             wc_add_notice( $api_error, 'error' );
             return [ 'result' => 'failure' ];
         }
