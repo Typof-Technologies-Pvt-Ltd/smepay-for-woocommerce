@@ -61,7 +61,8 @@ Yes. SMEPay uses secure, authenticated API communication. The plugin shares only
 = Can I use both Inline QR and Wizard QR display modes together? =
 No. You can only use one display mode at a time — either Inline QR or Wizard (popup) mode.
 This restriction applies to both the full SMEPay payment gateway and the Partial COD gateway.
-If Inline QR is enabled in settings, the Wizard display will be automatically disabled, and vice-versa.
+These two modes are not designed to run simultaneously, as they use different rendering methods for displaying the UPI QR code.
+To avoid conflicts during checkout, choose the mode that best fits your store’s design and keep only that one enabled.
 This ensures stable behavior and prevents conflicts between checkout rendering methods.
 
 == External Services ==
