@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-04T10:55:21+00:00\n"
+"POT-Creation-Date: 2025-11-04T12:02:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: smepay-for-woocommerce\n"
@@ -180,38 +180,92 @@ msgstr ""
 msgid "Invalid order."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:489
+#. translators: %s is the API error message returned by SMEPay.
+#: includes/class-smepfowo-gateway.php:429
+msgid "Failed to initiate SMEPay session: %s"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:431
+msgid "Failed to initiate SMEPay session. Please try again."
+msgstr ""
+
+#. translators: %s is the API error message returned by SMEPay.
+#: includes/class-smepfowo-gateway.php:455
+msgid "Failed to generate UPI QR code: %s"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:457
+#: includes/class-smepfowo-partial-cod-gateway.php:105
+msgid "Failed to generate UPI QR code."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:502
 msgid "Order payment failed. Please review the gateway settings."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:490
+#: includes/class-smepfowo-gateway.php:503
 msgid "Order payment failed."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:643
-msgid "SMEPay request failed: "
+#. translators: %s is the error message returned while fetching the access token.
+#: includes/class-smepfowo-gateway.php:630
+#: includes/class-smepfowo-gateway.php:885
+msgid "Failed to get access token: %s"
 msgstr ""
 
+#: includes/class-smepfowo-gateway.php:634
+#: includes/class-smepfowo-gateway.php:887
+#: includes/class-smepfowo-partial-cod-gateway.php:240
+msgid "Failed to get access token."
+msgstr ""
+
+#. translators: %s is the error message returned by SMEPay.
+#: includes/class-smepfowo-gateway.php:669
+msgid "SMEPay request failed: %s"
+msgstr ""
+
+#. translators: %s is the error message returned by SMEPay.
+#: includes/class-smepfowo-gateway.php:688
+msgid "Failed to initiate SMEPay payment: %s"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:690
+msgid "Failed to initiate SMEPay payment."
+msgstr ""
+
+#. translators: %s is the error message returned by SMEPay.
 #. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-gateway.php:850
-#: includes/class-smepfowo-gateway.php:895
-#: includes/class-smepfowo-gateway.php:902
-#: includes/class-smepfowo-partial-cod-gateway.php:243
-msgid "SMEPay error: %s"
+#: includes/class-smepfowo-gateway.php:923
+#: includes/class-smepfowo-partial-cod-gateway.php:285
+msgid "SMEPay validation failed: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:877
-msgid "SMEPay validation failed: "
-msgstr ""
-
+#. translators: %s is the error message returned by SMEPay.
 #. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-gateway.php:878
+#: includes/class-smepfowo-gateway.php:927
 #: includes/class-smepfowo-partial-cod-gateway.php:288
 msgid "SMEPay connection error: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:888
+#: includes/class-smepfowo-gateway.php:940
 msgid "Payment confirmed via SMEPay."
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:944
+msgid "Payment failed via SMEPay."
+msgstr ""
+
+#. translators: %s is the API error message returned by SMEPay.
+#. translators: %s is the error message returned by SMEPay API.
+#: includes/class-smepfowo-gateway.php:948
+#: includes/class-smepfowo-gateway.php:951
+#: includes/class-smepfowo-gateway.php:962
+#: includes/class-smepfowo-partial-cod-gateway.php:243
+msgid "SMEPay error: %s"
+msgstr ""
+
+#: includes/class-smepfowo-gateway.php:960
+msgid "Invalid response from SMEPay API."
 msgstr ""
 
 #: includes/class-smepfowo-partial-cod-gateway.php:24
@@ -235,25 +289,12 @@ msgstr ""
 msgid "Failed to create partial SMEPay order."
 msgstr ""
 
-#: includes/class-smepfowo-partial-cod-gateway.php:105
-msgid "Failed to generate UPI QR code."
-msgstr ""
-
 #: includes/class-smepfowo-partial-cod-gateway.php:154
 msgid "Unable to retrieve access token."
 msgstr ""
 
 #: includes/class-smepfowo-partial-cod-gateway.php:212
 msgid "Unknown API error."
-msgstr ""
-
-#: includes/class-smepfowo-partial-cod-gateway.php:240
-msgid "Failed to get access token."
-msgstr ""
-
-#. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-partial-cod-gateway.php:285
-msgid "SMEPay validation failed: %s"
 msgstr ""
 
 #. translators: %1$s is the partial amount paid, %2$s is the remaining amount to be collected on delivery.
@@ -279,6 +320,7 @@ msgstr ""
 msgid "Partial payment failed via SMEPay."
 msgstr ""
 
+#. translators: %s is the API error message returned by SMEPay.
 #: includes/class-smepfowo-partial-cod-gateway.php:343
 msgid "SMEPay partial payment error: %s"
 msgstr ""
