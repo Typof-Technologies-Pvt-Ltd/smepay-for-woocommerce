@@ -388,6 +388,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         ];
     }
 
+
     /**
      * Process payment
      */
@@ -420,32 +421,25 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         $result = $this->smepfowo_create_order( $order );
 
-        if ( empty( $result['slug'] ) ) {
+        if ( empty( $result['success'] ) ) {
             $error_message = $result['error'] ?? 'Failed to initiate SMEPay session. Please try again.';
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
             return [ 'result' => 'failure' ];
         }
 
-        $slug = $result['slug'];
-
-        // Optional inline QR support
+        $slug = $result['slug'] ?? '';
         $qr_code = '';
         $payment_link = '';
         $intents = [];
 
+        // Inline QR code support
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
 
-            if ( $initiate['status'] ?? false ) {
-                $qr_code      = $initiate['qr_code'];
+            if ( ! empty( $initiate['success'] ) ) {
+                $qr_code      = $initiate['qr_code'] ?? '';
                 $payment_link = $initiate['payment_link'] ?? '';
                 $intents      = $initiate['intents'] ?? [];
-
-                // Store for reference
-                $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
-                $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
-                $order->update_meta_data( '_smepfowo_intents', $intents );
-                $order->save();
             } else {
                 $error_message = $initiate['error'] ?? 'Failed to generate UPI QR code.';
                 wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
@@ -453,8 +447,11 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             }
         }
 
-
+        // Update order meta once
         $order->update_meta_data( '_smepfowo_slug', $slug );
+        if ( $qr_code ) $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
+        if ( $payment_link ) $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
+        if ( $intents ) $order->update_meta_data( '_smepfowo_intents', $intents );
         $order->save();
 
         // Prepare redirect URL (only used in block checkout)
@@ -500,7 +497,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
      * Create SMEPay order
      *
      * @param WC_Order $order WooCommerce order object.
-     * @return string|null SMEPay order slug or null on failure.
+     * @return array Associative array with 'success', 'slug', and 'error' keys.
      */
     protected function smepfowo_create_order( $order ) {
         $order_id  = (string) $order->get_id();
@@ -511,23 +508,22 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         // Prevent duplicate creation
         if ( $existing_order_id === $new_order_id ) {
-            return null;
+            return [
+                'success' => false,
+                'error'   => 'Duplicate order detected.'
+            ];
         }
 
         $token_result = $this->get_access_token();
-
         if ( empty( $token_result['token'] ) ) {
-            // Pass API error to WooCommerce notice
             $error_message = $token_result['error'] ?? 'Failed to get access token.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
-            return [ 'result' => 'failure' ];
+            return [
+                'success' => false,
+                'error'   => $error_message
+            ];
         }
 
         $token = $token_result['token'];
-
-
-        $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
-        $order->save();
 
         $payload = [
             'client_id'        => $this->client_id,
@@ -542,7 +538,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         ];
 
         $url = $this->get_api_base_url() . 'external/order/create';
-
         $response = wp_remote_post(
             $url,
             [
@@ -555,24 +550,27 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
-        // Handle request errors
         if ( is_wp_error( $response ) ) {
-            return [ 'error' => $response->get_error_message() ];
+            return [
+                'success' => false,
+                'error'   => $response->get_error_message()
+            ];
         }
 
-        $status_code = wp_remote_retrieve_response_code( $response );
-        $body        = json_decode( wp_remote_retrieve_body( $response ), true );
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        // Handle API-level errors
         if ( isset( $body['error'] ) ) {
-            // SMEPay might return { "error": "Invalid amount" } or similar
-            return [ 'error' => $body['error'] ];
+            return [
+                'success' => false,
+                'error'   => $body['error']
+            ];
         }
 
         // Save the real order_id if returned
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
-            $order->save();
+        } else {
+            $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
         }
 
         // Save the order slug if returned
@@ -580,12 +578,19 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( is_string( $slug ) && $slug !== '' ) {
             $order->update_meta_data( '_smepfowo_slug', $slug );
             $order->save();
-            return [ 'slug' => $slug ];
+            return [
+                'success' => true,
+                'slug'    => $slug
+            ];
         }
 
-        return [ 'error' => 'Unknown API error' ];
-    }
+        $order->save();
 
+        return [
+            'success' => false,
+            'error'   => 'Unknown API error'
+        ];
+    }
 
     /**
      * Initiate SMEPay Payment
