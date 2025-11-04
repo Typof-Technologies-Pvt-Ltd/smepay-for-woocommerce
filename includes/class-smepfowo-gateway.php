@@ -665,33 +665,43 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     public function smepfowo_check_order_status( $order_id ) {
 
         if ( empty( $order_id ) || empty( $this->client_id ) ) {
-            return null;
+            return [
+                'status' => false,
+                'error'  => 'Invalid order ID or client ID.',
+            ];
         }
 
         $order = wc_get_order( $order_id );
         if ( ! $order ) {
-            return null;
+            return [
+                'status' => false,
+                'error'  => 'Order not found.',
+            ];
         }
 
         $smepfowo_order_id = $order->get_meta( '_smepfowo_order_id' );
         if ( empty( $smepfowo_order_id ) ) {
-            return null;
+            return [
+                'status' => false,
+                'error'  => 'SMEPay order ID not found.',
+            ];
         }
 
         $token_result = $this->get_access_token();
-
         if ( empty( $token_result['token'] ) ) {
-            // Pass API error to WooCommerce notice
             $error_message = $token_result['error'] ?? 'Failed to get access token.';
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
-            return [ 'result' => 'failure' ];
+            return [
+                'status' => false,
+                'error'  => $error_message,
+            ];
         }
 
         $token = $token_result['token'];
 
         $payload = [
             'order_id'  => $smepfowo_order_id,
-            'client_id' => $this->client_id, // ✅ REQUIRED by SMEPay API
+            'client_id' => $this->client_id,
         ];
 
         $response = wp_remote_post(
@@ -707,7 +717,11 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
-            return null;
+            $error_message = $response->get_error_message();
+            return [
+                'status' => false,
+                'error'  => 'API request failed: ' . $error_message,
+            ];
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
@@ -716,8 +730,12 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             return $body;
         }
 
-        return null;
+        return [
+            'status' => false,
+            'error'  => $body['error'] ?? 'Failed to retrieve order status.',
+        ];
     }
+
 
 
     /**

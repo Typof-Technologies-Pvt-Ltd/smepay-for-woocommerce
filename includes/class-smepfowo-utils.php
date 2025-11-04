@@ -89,9 +89,9 @@ trait SMEPFOWO_Utils {
 	 */
     public function ajax_check_smepfowo_order_status() {
 
-    	check_ajax_referer( 'smepfowo_nonce_action', 'nonce' );
+	    check_ajax_referer( 'smepfowo_nonce_action', 'nonce' );
 
-    	$order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
+	    $order_id = isset( $_POST['order_id'] ) ? absint( $_POST['order_id'] ) : 0;
 
 	    if ( ! $order_id ) {
 	        wp_send_json_error( [ 'message' => 'Invalid order ID.' ] );
@@ -104,8 +104,8 @@ trait SMEPFOWO_Utils {
 
 	    $result = $this->smepfowo_check_order_status( $order_id );
 
-	    if ( $result && isset( $result['payment_status'] ) ) {
-	        $status = $result['payment_status'];
+	    if ( $result['status'] ?? false ) {
+	        $status = $result['payment_status'] ?? '';
 
 	        // Determine if payment was successful
 	        $is_paid = in_array( $status, [ 'SUCCESS', 'TEST_SUCCESS' ], true );
@@ -127,13 +127,14 @@ trait SMEPFOWO_Utils {
 	        ) : '';
 
 	        wp_send_json_success( [
-	            'status'        => $status,
-	            'is_paid'       => $is_paid,
-	            //'order_id'      => $result['order_id'] ?? '',
-	            'redirect_url'  => $thank_you_url,
+	            'status'       => $status,
+	            'is_paid'      => $is_paid,
+	            'redirect_url' => $thank_you_url,
 	        ] );
 	    }
 
-	    wp_send_json_error( [ 'message' => 'Unable to retrieve payment status.' ] );
+	    // Send API error message if available
+	    $error_message = $result['error'] ?? 'Unable to retrieve payment status.';
+	    wp_send_json_error( [ 'message' => $error_message ] );
 	}
 }
