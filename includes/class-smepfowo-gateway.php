@@ -65,7 +65,9 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $this->display_mode = $this->get_option( 'display_mode', 'wizard' );
 
         add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, [ $this, 'process_admin_options' ] );
-        add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_order_request' ], 10, 1 );
+        if ( $this->id === 'smepfowo' ) {
+            add_action( 'woocommerce_thankyou_' . $this->id, [ $this, 'send_validate_order_request' ], 10, 1 );
+        }
         add_action( 'wp_enqueue_scripts', [ $this, 'payment_scripts' ] );
         add_action( 'woocommerce_review_order_before_submit', [ $this, 'add_nonce_to_checkout' ] );
 
