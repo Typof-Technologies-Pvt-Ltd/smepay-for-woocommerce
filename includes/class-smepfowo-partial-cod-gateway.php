@@ -73,13 +73,14 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         $result = $this->smepfowo_create_order_partial( $order, $partial_amount );
 
-        if ( empty( $result['status'] ) ) {
+        if ( empty( $result['slug'] ) ) {
             $error_message = $result['error'] ?? 'Failed to create partial SMEPay order.';
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
             return [ 'result' => 'failure' ];
         }
 
         $slug = $result['slug'];
+
 
         // Optional inline QR support
         $qr_code = '';
@@ -155,10 +156,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         if ( empty( $token_result['token'] ) ) {
             $error_message = $token_result['error'] ?? 'Unable to retrieve access token.';
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
-            return [
-                'status' => false,
-                'error'  => $error_message,
-            ];
+            return ['error' => $error_message];
         }
 
         $token = $token_result['token'];
@@ -175,8 +173,10 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             ],
         ];
 
+        $url = $this->get_api_base_url() . 'external/order/create';
+
         $response = wp_remote_post(
-            $this->get_api_base_url() . 'external/order/create',
+            $url,
             [
                 'body'    => wp_json_encode( $payload ),
                 'headers' => [
@@ -188,36 +188,34 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         );
 
         if ( is_wp_error( $response ) ) {
-            $error_message = $response->get_error_message();
-            return [
-                'status' => false,
-                'error'  => 'API request failed: ' . $error_message,
-            ];
+            return ['error' => $response->get_error_message()];
         }
 
         $body = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        // Save SMEPay order ID (required for polling)
+        if ( isset( $body['error'] ) ) {
+            return ['error' => $body['error']];
+        }
+
+        // Update meta once
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
-            $order->save();
         }
 
         $slug = $body['order_slug'] ?? null;
         if ( is_string( $slug ) && $slug !== '' ) {
             $order->update_meta_data( '_smepfowo_slug', $slug );
-            $order->save();
-            return [
-                'status' => true,
-                'slug'   => $slug,
-            ];
         }
 
-        return [
-            'status' => false,
-            'error'  => 'Failed to retrieve order slug from SMEPay response.',
-        ];
+        $order->save();
+
+        if ( ! empty( $slug ) ) {
+            return ['slug' => $slug];
+        }
+
+        return ['error' => 'Unknown API error'];
     }
+
 
 
     public function send_validate_order_request( $order_id ) {
