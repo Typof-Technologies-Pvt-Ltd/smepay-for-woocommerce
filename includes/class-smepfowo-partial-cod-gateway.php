@@ -144,6 +144,14 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
      * @return array Result with slug or error
      */
     private function smepfowo_create_order_partial( $order, $amount ) {
+        // Prevent creating order if amount is less than 1
+        if ( $amount < 1 ) {
+            /* translators: Message shown when the partial payment amount is too small to process */
+            $error_message = __( 'Partial payment amount must be at least 1.', 'smepay-for-woocommerce' );
+            wc_add_notice( $error_message, 'error' );
+            return ['error' => $error_message];
+        }
+
         $order_id    = (string) $order->get_id();
         $timestamp   = time();
         $random      = wp_rand( 1000, 9999 );
