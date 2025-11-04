@@ -436,7 +436,7 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
 
-            if ( ! empty( $initiate['success'] ) ) {
+            if ( ! empty( $initiate['status'] ) ) {
                 $qr_code      = $initiate['qr_code'] ?? '';
                 $payment_link = $initiate['payment_link'] ?? '';
                 $intents      = $initiate['intents'] ?? [];
