@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-11-04T13:43:12+00:00\n"
+"POT-Creation-Date: 2025-11-04T13:49:20+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: smepay-for-woocommerce\n"
@@ -207,69 +207,68 @@ msgstr ""
 msgid "Order payment failed."
 msgstr ""
 
-#. translators: Message shown when the order total is too small to process a payment
-#: includes/class-smepfowo-gateway.php:521
-msgid "Order total must be at least 1 to process payment."
+#: includes/class-smepfowo-gateway.php:523
+msgid "Order total must be at least %s1 to process payment."
 msgstr ""
 
 #. translators: %s is the error message returned while fetching the access token.
-#: includes/class-smepfowo-gateway.php:641
-#: includes/class-smepfowo-gateway.php:896
+#: includes/class-smepfowo-gateway.php:645
+#: includes/class-smepfowo-gateway.php:900
 msgid "Failed to get access token: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:645
-#: includes/class-smepfowo-gateway.php:898
-#: includes/class-smepfowo-partial-cod-gateway.php:248
+#: includes/class-smepfowo-gateway.php:649
+#: includes/class-smepfowo-gateway.php:902
+#: includes/class-smepfowo-partial-cod-gateway.php:252
 msgid "Failed to get access token."
 msgstr ""
 
 #. translators: %s is the error message returned by SMEPay.
-#: includes/class-smepfowo-gateway.php:680
+#: includes/class-smepfowo-gateway.php:684
 msgid "SMEPay request failed: %s"
 msgstr ""
 
 #. translators: %s is the error message returned by SMEPay.
-#: includes/class-smepfowo-gateway.php:699
+#: includes/class-smepfowo-gateway.php:703
 msgid "Failed to initiate SMEPay payment: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:701
+#: includes/class-smepfowo-gateway.php:705
 msgid "Failed to initiate SMEPay payment."
 msgstr ""
 
 #. translators: %s is the error message returned by SMEPay.
 #. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-gateway.php:934
-#: includes/class-smepfowo-partial-cod-gateway.php:293
+#: includes/class-smepfowo-gateway.php:938
+#: includes/class-smepfowo-partial-cod-gateway.php:297
 msgid "SMEPay validation failed: %s"
 msgstr ""
 
 #. translators: %s is the error message returned by SMEPay.
 #. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-gateway.php:938
-#: includes/class-smepfowo-partial-cod-gateway.php:296
+#: includes/class-smepfowo-gateway.php:942
+#: includes/class-smepfowo-partial-cod-gateway.php:300
 msgid "SMEPay connection error: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:951
+#: includes/class-smepfowo-gateway.php:955
 msgid "Payment confirmed via SMEPay."
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:955
+#: includes/class-smepfowo-gateway.php:959
 msgid "Payment failed via SMEPay."
 msgstr ""
 
 #. translators: %s is the API error message returned by SMEPay.
 #. translators: %s is the error message returned by SMEPay API.
-#: includes/class-smepfowo-gateway.php:959
-#: includes/class-smepfowo-gateway.php:962
-#: includes/class-smepfowo-gateway.php:973
-#: includes/class-smepfowo-partial-cod-gateway.php:251
+#: includes/class-smepfowo-gateway.php:963
+#: includes/class-smepfowo-gateway.php:966
+#: includes/class-smepfowo-gateway.php:977
+#: includes/class-smepfowo-partial-cod-gateway.php:255
 msgid "SMEPay error: %s"
 msgstr ""
 
-#: includes/class-smepfowo-gateway.php:971
+#: includes/class-smepfowo-gateway.php:975
 msgid "Invalid response from SMEPay API."
 msgstr ""
 
@@ -294,54 +293,53 @@ msgstr ""
 msgid "Failed to create partial SMEPay order."
 msgstr ""
 
-#. translators: Message shown when the partial payment amount is too small to process
-#: includes/class-smepfowo-partial-cod-gateway.php:150
-msgid "Partial payment amount must be at least 1."
+#: includes/class-smepfowo-partial-cod-gateway.php:152
+msgid "Partial payment amount must be at least %s1."
 msgstr ""
 
-#: includes/class-smepfowo-partial-cod-gateway.php:162
+#: includes/class-smepfowo-partial-cod-gateway.php:166
 msgid "Unable to retrieve access token."
 msgstr ""
 
-#: includes/class-smepfowo-partial-cod-gateway.php:220
+#: includes/class-smepfowo-partial-cod-gateway.php:224
 msgid "Unknown API error."
 msgstr ""
 
 #. translators: %1$s is the partial amount paid, %2$s is the remaining amount to be collected on delivery.
 #. translators: %1$s is the paid amount, %2$s is the remaining amount
-#: includes/class-smepfowo-partial-cod-gateway.php:316
+#: includes/class-smepfowo-partial-cod-gateway.php:320
 #: includes/class-smepfowo-webhook-handler.php:79
 msgid "Partial payment of %1$s received via SMEPay. %2$s remaining to be collected on delivery."
 msgstr ""
 
 #. translators: %1$s is the partial amount paid, %2$s is the remaining amount for COD.
 #. translators: %1$s is the paid amount, %2$s is the remaining amount
-#: includes/class-smepfowo-partial-cod-gateway.php:326
+#: includes/class-smepfowo-partial-cod-gateway.php:330
 #: includes/class-smepfowo-webhook-handler.php:87
 msgid "Partial payment validated: %1$s paid via SMEPay. %2$s remaining for COD."
 msgstr ""
 
 #. translators: Note added to the order when full payment is received via SMEPay.
-#: includes/class-smepfowo-partial-cod-gateway.php:339
+#: includes/class-smepfowo-partial-cod-gateway.php:343
 msgid "Full payment received via SMEPay."
 msgstr ""
 
-#: includes/class-smepfowo-partial-cod-gateway.php:344
+#: includes/class-smepfowo-partial-cod-gateway.php:348
 msgid "Partial payment failed via SMEPay."
 msgstr ""
 
 #. translators: %s is the API error message returned by SMEPay.
-#: includes/class-smepfowo-partial-cod-gateway.php:351
+#: includes/class-smepfowo-partial-cod-gateway.php:355
 msgid "SMEPay partial payment error: %s"
 msgstr ""
 
 #. translators: 1: paid amount (formatted), 2: remaining amount (formatted)
-#: includes/class-smepfowo-partial-cod-gateway.php:387
+#: includes/class-smepfowo-partial-cod-gateway.php:391
 msgid "Thank you! You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery. We will notify you when your order is out for delivery."
 msgstr ""
 
 #. translators: %1$s is the paid amount, %2$s is the remaining amount
-#: includes/class-smepfowo-partial-cod-gateway.php:421
+#: includes/class-smepfowo-partial-cod-gateway.php:425
 msgid "You have paid %1$s in advance via SMEPay. The remaining %2$s is payable on delivery."
 msgstr ""
 

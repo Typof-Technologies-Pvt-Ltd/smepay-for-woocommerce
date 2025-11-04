@@ -517,15 +517,19 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     protected function smepfowo_create_order( $order ) {
         // Prevent creating order if total is less than 1
         if ( $order->get_total() < 1 ) {
-            /* translators: Message shown when the order total is too small to process a payment */
-            $error_message = __( 'Order total must be at least 1 to process payment.', 'smepay-for-woocommerce' );
+            $currency = get_woocommerce_currency_symbol();
+            /* translators: Message shown when the order total is too small to process a payment, %s is the currency symbol */
+            $error_message = sprintf(
+                __( 'Order total must be at least %s1 to process payment.', 'smepay-for-woocommerce' ),
+                $currency
+            );
             wc_add_notice( $error_message, 'error' );
             return [
                 'success' => false,
                 'error'   => $error_message
             ];
         }
-        
+
         $order_id  = (string) $order->get_id();
         $timestamp = time();
         $random    = wp_rand(1000, 9999);
