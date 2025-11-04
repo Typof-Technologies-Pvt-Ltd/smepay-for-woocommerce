@@ -59,6 +59,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
     public function process_payment( $order_id ) {
         $order = wc_get_order( $order_id );
+
         if ( ! $order ) {
             wc_add_notice( __( 'Invalid order.', 'smepay-for-woocommerce' ), 'error' );
             return [ 'result' => 'failure' ];
@@ -67,74 +68,70 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
         $partial_percent = absint( $this->get_option( 'partial_percentage', 30 ) );
         $partial_amount  = round( $order->get_total() * ( $partial_percent / 100 ), 2 );
 
+        // Save partial payment meta
         $order->update_meta_data( '_smepfowo_partial_cod', 'yes' );
         $order->update_meta_data( '_smepfowo_partial_amount', $partial_amount );
         $order->save();
 
+        // Create partial SMEPay order
         $result = $this->smepfowo_create_order_partial( $order, $partial_amount );
 
         if ( empty( $result['slug'] ) ) {
-            $error_message = $result['error'] ?? 'Failed to create partial SMEPay order.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            $error_message = $result['error'] ?? __( 'Failed to create partial SMEPay order.', 'smepay-for-woocommerce' );
+            wc_add_notice( $error_message, 'error' );
             return [ 'result' => 'failure' ];
         }
 
         $slug = $result['slug'];
 
-
         // Optional inline QR support
-        $qr_code = '';
+        $qr_code      = '';
         $payment_link = '';
-        $intents = [];
+        $intents      = [];
 
         if ( $this->get_option( 'display_mode' ) === 'inline' ) {
             $initiate = $this->smepfowo_initiate_payment( $slug );
 
-            if ( $initiate['status'] ?? false ) {
-                $qr_code      = $initiate['qr_code'];
+            if ( ! empty( $initiate['status'] ) && $initiate['status'] ) {
+                $qr_code      = $initiate['qr_code'] ?? '';
                 $payment_link = $initiate['payment_link'] ?? '';
                 $intents      = $initiate['intents'] ?? [];
-                
-                // Store for reference
+
                 $order->update_meta_data( '_smepfowo_qr_code', $qr_code );
                 $order->update_meta_data( '_smepfowo_payment_link', $payment_link );
                 $order->update_meta_data( '_smepfowo_intents', $intents );
                 $order->save();
             } else {
-                $error_message = $initiate['error'] ?? 'Failed to generate UPI QR code.';
-                wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+                $error_message = $initiate['error'] ?? __( 'Failed to generate UPI QR code.', 'smepay-for-woocommerce' );
+                wc_add_notice( $error_message, 'error' );
                 return [ 'result' => 'failure' ];
             }
         }
 
-
-
-        // 🔍 Detect layout (block vs classic)
+        // Determine checkout layout
         $checkout_layout = $this->get_checkout_layout();
-
-        // 🧠 Only set redirect if using block layout
         $redirect_url = ( 'block' === $checkout_layout['layout'] )
             ? add_query_arg(
                 [
-                    'key'           => $order->get_order_key(),
-                    'redirect_url'  => $order->get_checkout_order_received_url(),
-                    'smepfowo_partial_cod_slug' => $slug,
-                    'order_id'      => $order_id, 
+                    'key'                        => $order->get_order_key(),
+                    'redirect_url'               => $order->get_checkout_order_received_url(),
+                    'smepfowo_partial_cod_slug'  => $slug,
+                    'order_id'                   => $order_id,
                 ],
                 $order->get_checkout_payment_url( false )
             )
             : '';
 
         return [
-            'result'        => 'success',
-            'smepfowo_partial_cod_slug' => $slug,
-            'order_id'      => $order_id,
-            'order_key'     => $order->get_order_key(),
-            'redirect_url'  => $order->get_checkout_order_received_url(),
-            'redirect'      => $redirect_url, // 🧠 Empty in classic layout, which triggers popup
-            'qr_code'       => $qr_code,
-            'payment_link'  => $payment_link,
-            'intents'       => $intents,
+            'result'                       => 'success',
+            'smepfowo_partial_cod_slug'    => $slug,
+            'order_id'                     => $order_id,
+            'order_key'                    => $order->get_order_key(),
+            'redirect_url'                 => $order->get_checkout_order_received_url(),
+            'redirect'                     => $redirect_url,
+            'qr_code'                      => $qr_code,
+            'payment_link'                 => $payment_link,
+            'intents'                      => $intents,
         ];
     }
 
@@ -147,15 +144,15 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
      * @return array Result with slug or error
      */
     private function smepfowo_create_order_partial( $order, $amount ) {
-        $order_id  = (string) $order->get_id();
-        $timestamp = time();
-        $random    = wp_rand(1000, 9999);
+        $order_id    = (string) $order->get_id();
+        $timestamp   = time();
+        $random      = wp_rand( 1000, 9999 );
         $new_order_id = "{$order_id}-{$timestamp}-{$random}";
 
         $token_result = $this->get_access_token();
         if ( empty( $token_result['token'] ) ) {
-            $error_message = $token_result['error'] ?? 'Unable to retrieve access token.';
-            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
+            $error_message = $token_result['error'] ?? __( 'Unable to retrieve access token.', 'smepay-for-woocommerce' );
+            wc_add_notice( $error_message, 'error' );
             return ['error' => $error_message];
         }
 
@@ -163,9 +160,9 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
 
         $payload = [
             'client_id'        => $this->client_id,
-            'amount'           => (string) number_format( (float) $amount, 2, '.', '' ),
+            'amount'           => number_format( (float) $amount, 2, '.', '' ),
             'order_id'         => $new_order_id,
-            'callback_url'     => home_url('/wp-json/smepay/v1/webhook'),
+            'callback_url'     => home_url( '/wp-json/smepay/v1/webhook' ),
             'customer_details' => [
                 'email'  => $order->get_billing_email(),
                 'mobile' => $order->get_billing_phone(),
@@ -197,13 +194,12 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return ['error' => $body['error']];
         }
 
-        // Update meta once
         if ( ! empty( $body['order_id'] ) ) {
             $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
         }
 
         $slug = $body['order_slug'] ?? null;
-        if ( is_string( $slug ) && $slug !== '' ) {
+        if ( ! empty( $slug ) && is_string( $slug ) ) {
             $order->update_meta_data( '_smepfowo_slug', $slug );
         }
 
@@ -213,9 +209,8 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return ['slug' => $slug];
         }
 
-        return ['error' => 'Unknown API error'];
+        return ['error' => __( 'Unknown API error.', 'smepay-for-woocommerce' )];
     }
-
 
 
     public function send_validate_order_request( $order_id ) {
