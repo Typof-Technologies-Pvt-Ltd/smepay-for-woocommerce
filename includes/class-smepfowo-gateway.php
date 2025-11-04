@@ -774,17 +774,14 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
     public function send_validate_order_request( $order_id ) {
         $order = wc_get_order( $order_id );
 
-        // Invalid order
         if ( ! $order ) {
             return;
         }
 
-        // Not paid via SMEPay
         if ( $order->get_payment_method() !== $this->id ) {
             return;
         }
 
-        // Gateway unavailable
         if ( ! $this->is_available() ) {
             return;
         }
@@ -793,22 +790,22 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         $token_result = $this->get_access_token();
 
         if ( empty( $token_result['token'] ) ) {
-            // Pass API error to WooCommerce notice
             $error_message = $token_result['error'] ?? 'Failed to get access token.';
+            // Add WooCommerce notice for the user
             wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
-            return [ 'result' => 'failure' ];
+            // Add order note for admin/debugging
+            $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+            return;
         }
 
         $token = $token_result['token'];
 
-        // Prepare request data
         $data = [
             'client_id' => $this->client_id,
             'amount'    => round( (float) $order->get_total(), 2 ),
             'slug'      => $order->get_meta( '_smepfowo_slug' ),
         ];
 
-        // Send API request
         $response = wp_remote_post(
             $this->get_api_base_url() . 'external/order/validate',
             [
@@ -822,36 +819,36 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ]
         );
 
-        // Connection error
         if ( is_wp_error( $response ) ) {
+            $error_message = $response->get_error_message();
+            wc_add_notice( __( 'SMEPay validation failed: ' . $error_message, 'smepay-for-woocommerce' ), 'error' );
+            $order->add_order_note( sprintf( __( 'SMEPay connection error: %s', 'smepay-for-woocommerce' ), $error_message ) );
             return;
         }
 
-        // Decode API response
-        $body              = wp_remote_retrieve_body( $response );
-        $decoded_response  = json_decode( $body, true );
+        $decoded_response = json_decode( wp_remote_retrieve_body( $response ), true );
 
-        // Handle success
-        if (
-            isset( $decoded_response['status'], $decoded_response['payment_status'] ) &&
-            $decoded_response['status'] &&
-            (
-                'SUCCESS' === $decoded_response['payment_status'] ||
-                'TEST_SUCCESS' === $decoded_response['payment_status']
-            )
-        ) {
-            if ( $order->get_status() !== 'completed' ) {
-                $order->payment_complete();
-                $order->add_order_note( __( 'Payment confirmed via SMEPay.', 'smepay-for-woocommerce' ) );
+        if ( isset( $decoded_response['status'], $decoded_response['payment_status'] ) && $decoded_response['status'] ) {
+            if ( 'SUCCESS' === $decoded_response['payment_status'] || 'TEST_SUCCESS' === $decoded_response['payment_status'] ) {
+                if ( $order->get_status() !== 'completed' ) {
+                    $order->payment_complete();
+                    $order->add_order_note( __( 'Payment confirmed via SMEPay.', 'smepay-for-woocommerce' ) );
+                }
+            } else {
+                // API returned failure with optional error message
+                $api_error = $decoded_response['error'] ?? 'Payment failed via SMEPay.';
+                if ( $order->get_status() !== 'failed' ) {
+                    $order->update_status( 'failed', __( $api_error, 'smepay-for-woocommerce' ) );
+                    $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $api_error ) );
+                }
+                wc_add_notice( __( $api_error, 'smepay-for-woocommerce' ), 'error' );
             }
         } else {
-            // Payment failed
-            if ( $order->get_status() !== 'failed' ) {
-                $order->update_status( 'failed', __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
-                $order->add_order_note( __( 'Payment failed via SMEPay.', 'smepay-for-woocommerce' ) );
-            }
+            // Unexpected API response
+            $error_message = 'Invalid response from SMEPay API.';
+            $order->add_order_note( sprintf( __( 'SMEPay error: %s', 'smepay-for-woocommerce' ), $error_message ) );
+            wc_add_notice( __( $error_message, 'smepay-for-woocommerce' ), 'error' );
         }
     }
-
 
 }
