@@ -4,7 +4,7 @@ Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 Requires PHP: 7.0
 Requires Plugins: woocommerce
 License: GPLv3 or later
@@ -134,6 +134,9 @@ This plugin interacts with the following SMEPay-hosted domains:
 
 == Changelog ==
 
+= 1.0.5 =
+* Updated webhook flow to use the correct `_smepfowo_order_id` for ref_id.
+
 = 1.0.4 =
 * Fixed an issue where full SMEPay validation was triggered for partial COD orders.
 * Improved gateway hook isolation to prevent cross-validation between payment types.
@@ -161,6 +164,9 @@ This plugin interacts with the following SMEPay-hosted domains:
 * Customizable settings for store owners.
 
 == Upgrade Notice ==
+
+= 1.0.5 =
+* Updated webhook flow to use the correct `_smepfowo_order_id` for ref_id.
 
 = 1.0.4 =
 * Fixed issue where full order validation ran for partial COD payments.
