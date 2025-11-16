@@ -206,9 +206,7 @@ class SMEPFOWO_Partial_COD_Gateway extends SMEPFOWO_Gateway {
             return ['error' => $body['error']];
         }
 
-        if ( ! empty( $body['order_id'] ) ) {
-            $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
-        }
+        $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
 
         $slug = $body['order_slug'] ?? null;
         if ( ! empty( $slug ) && is_string( $slug ) ) {

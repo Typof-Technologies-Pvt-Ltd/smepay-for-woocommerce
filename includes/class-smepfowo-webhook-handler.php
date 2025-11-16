@@ -45,17 +45,18 @@ class SMEPFOWO_Webhook_Handler {
 		$transaction_id = sanitize_text_field($body['transaction_id'] ?? '');
 		$status        = strtoupper(sanitize_text_field($body['status']));
 
-		$ref_id_parts = explode('-', $ref_id);
-		$order_id = $ref_id_parts[0] ?? null;
+		// Lookup order by the full _smepfowo_order_id
+		$orders = wc_get_orders([
+		    'limit'      => 1,
+		    'meta_key'   => '_smepfowo_order_id',
+		    'meta_value' => $ref_id,
+		]);
 
-		if (! $order_id || ! is_numeric($order_id)) {
-			return new WP_REST_Response(['error' => 'Invalid order reference'], 400);
+		if (empty($orders)) {
+		    return new WP_REST_Response(['error' => 'Invalid ref_id'], 400);
 		}
 
-		$order = wc_get_order($order_id);
-		if (! $order) {
-			return new WP_REST_Response(['error' => 'Order not found'], 404);
-		}
+		$order = $orders[0];
 
 		// Check if already paid
 		if ($order->is_paid()) {

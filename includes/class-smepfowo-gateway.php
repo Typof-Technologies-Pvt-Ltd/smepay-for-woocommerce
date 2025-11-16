@@ -596,12 +596,8 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
             ];
         }
 
-        // Save the real order_id if returned
-        if ( ! empty( $body['order_id'] ) ) {
-            $order->update_meta_data( '_smepfowo_order_id', $body['order_id'] );
-        } else {
-            $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
-        }
+        // Save the new_order_id
+        $order->update_meta_data( '_smepfowo_order_id', $new_order_id );
 
         // Save the order slug if returned
         $slug = $body['order_slug'] ?? null;
