@@ -161,6 +161,36 @@ jQuery(function ($) {
           const paymentSlug = response.smepfowo_slug || response.smepfowo_partial_cod_slug;
           // Only trigger the widget popup in wizard mode
           if (smepfowo_data.display_mode === 'wizard') {
+            const orderId = response.order_id;
+            const redirectUrl = response.redirect_url;
+            
+            // ✅ ADDED: Start polling in wizard mode to catch payment completion
+            let pollAttempt = 0;
+            const wizardPollingInterval = setInterval(function() {
+              pollAttempt++;
+              
+              if (pollAttempt > 180) { // 30 mins max (180 * 10 seconds)
+                clearInterval(wizardPollingInterval);
+                return;
+              }
+              
+              $.ajax({
+                url: smepfowo_data.ajax_url,
+                type: 'POST',
+                data: {
+                  action: 'check_smepfowo_order_status',
+                  nonce: smepfowo_data.nonce,
+                  order_id: orderId
+                },
+                success: function(pollResponse) {
+                  if (pollResponse.success && pollResponse.data && (pollResponse.data.payment_status === 'SUCCESS' || pollResponse.data.payment_status === 'TEST_SUCCESS')) {
+                    clearInterval(wizardPollingInterval);
+                    window.location.href = redirectUrl;
+                  }
+                }
+              });
+            }, 10000);
+            
             window.smepayCheckout({
               slug: paymentSlug,
               onSuccess: function () {
