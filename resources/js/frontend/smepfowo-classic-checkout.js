@@ -14,6 +14,17 @@ jQuery(function ($) {
     smepfowo_user_triggered_checkout = false;
   });
 
+  // ✅ Update nonce dynamically when checkout updates (new user checkbox, field changes, etc.)
+  function updateNonce() {
+    if (!smepfowo_data) return;
+    
+    const $nonceField = $form.find('input[name="smepfowo_nonce"]');
+    if ($nonceField.length) {
+      smepfowo_data.nonce = $nonceField.val();
+      console.log('[SMEPay] Nonce updated');
+    }
+  }
+
   function startCountdownTimer(container, durationSeconds = 300) {
     // Prevent duplicate timers
     if (container.querySelector('.smepfowo-countdown-timer')) return;
@@ -93,6 +104,7 @@ jQuery(function ($) {
   // Reliable trigger after WooCommerce re-renders payment method section
   $('body').on('updated_checkout', function () {
     console.log('[SMEPay] updated_checkout triggered');
+    updateNonce(); // ✅ Update nonce on every checkout update
     togglePlaceOrderButton();
 
     // Optionally, you can re-render QR or intents here if needed
@@ -118,6 +130,9 @@ jQuery(function ($) {
     if (!['smepfowo', 'smepfowo_partial_cod'].includes(selectedMethod)) {
         return true;
     }
+
+    // ✅ Ensure nonce is fresh right before AJAX call
+    updateNonce();
 
     $form.block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
 
