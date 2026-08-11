@@ -128,31 +128,13 @@ jQuery(function ($) {
       return false;
     }
 
-    let formData = $form.serialize();
-    
-    // ✅ CRITICAL FIX: Remove account creation fields that SMEPay doesn't expect
-    // These fields are only for WooCommerce account creation, not payment processing
-    const accountFieldsToRemove = [
-      'account_password',
-      'account_username', 
-      'createaccount'
-    ];
-    
-    // Rebuild formData without account fields
-    let cleanFormData = '';
-    const params = new URLSearchParams(formData);
-    for (let [key, value] of params) {
-      if (!accountFieldsToRemove.includes(key)) {
-        cleanFormData += (cleanFormData ? '&' : '') + encodeURIComponent(key) + '=' + encodeURIComponent(value);
-      }
-    }
-    
-    cleanFormData += '&smepfowo_nonce=' + encodeURIComponent(smepfowo_data.nonce);
+   let formData = $form.serialize();
+   formData += '&smepfowo_nonce=' + encodeURIComponent(smepfowo_data.nonce);
 
     $.ajax({
       type: 'POST',
       url: wc_checkout_params.checkout_url,
-      data: cleanFormData,
+      data: formData,
       dataType: 'json',
       success: function (response) {
         $form.unblock();
