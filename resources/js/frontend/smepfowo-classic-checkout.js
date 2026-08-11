@@ -138,6 +138,10 @@ jQuery(function ($) {
       dataType: 'json',
       success: function (response) {
         $form.unblock();
+          if (response.reload === true) {
+    window.location.reload();
+    return;
+  }
         if (response.result === 'failure') {
           if (response.messages) {
             $form.prepend(response.messages);
