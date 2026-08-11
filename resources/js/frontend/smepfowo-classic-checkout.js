@@ -4,7 +4,6 @@ jQuery(function ($) {
   const $form = $('form.checkout');
 
   let smepfowo_user_triggered_checkout = false;
-  let smepfowo_payment_processing = false; // ✅ NEW: Track if payment is already in progress
 
   // ✅ Track when user actually clicks the place order button
   $('#place_order').on('click', function () {
@@ -13,7 +12,6 @@ jQuery(function ($) {
 
   $(document).on('change', 'input[name="payment_method"]', function () {
     smepfowo_user_triggered_checkout = false;
-    smepfowo_payment_processing = false; // ✅ Reset when payment method changes
   });
 
   // ✅ Update nonce dynamically when checkout updates (new user checkbox, field changes, etc.)
@@ -108,22 +106,6 @@ jQuery(function ($) {
     console.log('[SMEPay] updated_checkout triggered');
     updateNonce(); // ✅ Update nonce on every checkout update
     togglePlaceOrderButton();
-
-    // Optionally, you can re-render QR or intents here if needed
-    const selectedMethod = $('input[name="payment_method"]:checked').val();
-    if (['smepfowo', 'smepfowo_partial_cod'].includes(selectedMethod)) {
-      // 🚫 Don't trigger if the user hasn't clicked Place Order yet
-      if (!smepfowo_user_triggered_checkout) {
-        console.log('[SMEPay] Skipping trigger – user has not initiated checkout.');
-        return;
-      }
-      
-      // ✅ DON'T re-trigger if payment is already being processed (prevents double validation)
-      if (smepfowo_payment_processing) {
-        console.log('[SMEPay] Payment already in progress – skipping re-trigger.');
-        return;
-      }
-    }
   });
 
   $form.on('checkout_place_order_smepfowo checkout_place_order_smepfowo_partial_cod', function (e) {
@@ -134,10 +116,6 @@ jQuery(function ($) {
         return true;
     }
 
-    // ✅ Ensure nonce is fresh right before AJAX call
-    updateNonce();
-    smepfowo_payment_processing = true; // ✅ Set flag to prevent re-triggers
-
     $form.block({ message: null, overlayCSS: { background: '#fff', opacity: 0.6 } });
 
     $('.woocommerce-NoticeGroup-checkout, .woocommerce-error, .woocommerce-message, .is-error').remove();
@@ -145,24 +123,40 @@ jQuery(function ($) {
     // 🔐 ✅ Check for nonce/config before continuing
     if (!smepfowo_data || !smepfowo_data.nonce) {
       console.error('Missing SMEPay nonce or config');
-      smepfowo_payment_processing = false; // ✅ Reset flag
       $form.unblock();
       $form.prepend(`<div class="woocommerce-error is-error">${__('Missing payment configuration. Please refresh and try again.', 'smepay-for-woocommerce')}</div>`);
       return false;
     }
 
     let formData = $form.serialize();
-    formData += '&smepfowo_nonce=' + encodeURIComponent(smepfowo_data.nonce);
+    
+    // ✅ CRITICAL FIX: Remove account creation fields that SMEPay doesn't expect
+    // These fields are only for WooCommerce account creation, not payment processing
+    const accountFieldsToRemove = [
+      'account_password',
+      'account_username', 
+      'createaccount'
+    ];
+    
+    // Rebuild formData without account fields
+    let cleanFormData = '';
+    const params = new URLSearchParams(formData);
+    for (let [key, value] of params) {
+      if (!accountFieldsToRemove.includes(key)) {
+        cleanFormData += (cleanFormData ? '&' : '') + encodeURIComponent(key) + '=' + encodeURIComponent(value);
+      }
+    }
+    
+    cleanFormData += '&smepfowo_nonce=' + encodeURIComponent(smepfowo_data.nonce);
 
     $.ajax({
       type: 'POST',
       url: wc_checkout_params.checkout_url,
-      data: formData,
+      data: cleanFormData,
       dataType: 'json',
       success: function (response) {
         $form.unblock();
         if (response.result === 'failure') {
-          smepfowo_payment_processing = false; // ✅ Reset flag on failure
           if (response.messages) {
             $form.prepend(response.messages);
           } else {
@@ -222,7 +216,6 @@ jQuery(function ($) {
               },
               onFailure: function () {
                 console.warn(__('❌ SMEPay widget closed or failed.', 'smepay-for-woocommerce'));
-                smepfowo_payment_processing = false; // ✅ Reset flag
                 $('#place_order').show().css('display', ''); // Restore the button just in case
               }
             });
@@ -231,7 +224,6 @@ jQuery(function ($) {
 
               if ($paymentBox.length === 0) {
                 console.warn('❌ Payment box not ready yet. Retrying...');
-                smepfowo_payment_processing = false; // ✅ Reset flag
                 setTimeout(() => {
                   $('form.checkout').trigger(`checkout_place_order_${selectedMethod}`);
                 }, 100);
@@ -340,7 +332,6 @@ jQuery(function ($) {
                 startCountdownTimer($paymentBox[0]);
               } else {
                 console.warn('❌ Could not find .payment_box.payment_method_smepfowo to render QR or intents.');
-                smepfowo_payment_processing = false; // ✅ Reset flag
                 $('#place_order').show().css('display', ''); // Restore the button just in case
               }
             }
@@ -348,12 +339,10 @@ jQuery(function ($) {
 
         } else {
           console.warn(__('⚠️ Unexpected response:', 'smepay-for-woocommerce'), response);
-          smepfowo_payment_processing = false; // ✅ Reset flag
         }
       },
       error: function (err) {
         console.error(__('🔥 AJAX error:', 'smepay-for-woocommerce'), err);
-        smepfowo_payment_processing = false; // ✅ Reset flag
         $form.unblock();
         $form.prepend(`<div class="woocommerce-error is-error">${__('Unexpected error occurred. Please try again.', 'smepay-for-woocommerce')}</div>`);
       }
