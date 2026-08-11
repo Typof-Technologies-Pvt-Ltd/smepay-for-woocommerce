@@ -403,18 +403,6 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
         
         $checkout_layout = $this->get_checkout_layout();
 
-        // Verify nonce only for classic checkout (non-block)
-        if ( 'block' !== $checkout_layout['layout'] ) {
-            $nonce = isset( $_POST['smepfowo_nonce'] )
-                ? sanitize_text_field( wp_unslash( $_POST['smepfowo_nonce'] ) )
-                : '';
-
-            if ( ! $nonce || ! wp_verify_nonce( $nonce, 'smepfowo_nonce_action' ) ) {
-                wc_add_notice( __( 'Security check failed. Please refresh the page and try again.', 'smepay-for-woocommerce' ), 'error' );
-                return [ 'result' => 'failure' ];
-            }
-        }
-
         $order = wc_get_order( $order_id );
         if ( ! $order ) {
             wc_add_notice( __( 'Invalid order.', 'smepay-for-woocommerce' ), 'error' );
