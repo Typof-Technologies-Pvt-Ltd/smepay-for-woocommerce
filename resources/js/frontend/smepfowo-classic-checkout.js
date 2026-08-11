@@ -103,8 +103,11 @@ jQuery(function ($) {
         console.log('[SMEPay] Skipping trigger – user has not initiated checkout.');
         return;
       }
-      // You must re-trigger the Ajax to load the QR and intents again
-      $('form.checkout').trigger(`checkout_place_order_${selectedMethod}`);
+      
+      // ✅ Add delay to let WooCommerce fully process form updates (new user, billing fields, etc.)
+      setTimeout(function() {
+        $('form.checkout').trigger(`checkout_place_order_${selectedMethod}`);
+      }, 200);
     }
   });
 
