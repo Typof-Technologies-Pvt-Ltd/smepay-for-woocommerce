@@ -124,10 +124,11 @@ trait SMEPFOWO_Utils {
 	        }
 
 	        wp_send_json_success( [
-	            'status'       => $status,
-	            'is_paid'      => $is_paid,
-	            'redirect_url' => $thank_you_url,
-	            'raw'          => $result['raw'] ?? [], // optional: for debugging or frontend use
+	            'status'         => $status,
+	            'payment_status' => $status,
+	            'is_paid'        => $is_paid,
+	            'redirect_url'   => $thank_you_url,
+	            'raw'            => $result['raw'] ?? [], // optional: for debugging or frontend use
 	        ] );
 	    }
 

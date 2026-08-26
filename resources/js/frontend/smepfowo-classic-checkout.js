@@ -187,7 +187,9 @@ jQuery(function ($) {
                   order_id: orderId
                 },
                 success: function(pollResponse) {
-                  if (pollResponse.success && pollResponse.data && (pollResponse.data.payment_status === 'SUCCESS' || pollResponse.data.payment_status === 'TEST_SUCCESS')) {
+                  if (pollResponse.success && pollResponse.data && 
+                      (pollResponse.data.status === 'SUCCESS' || pollResponse.data.status === 'TEST_SUCCESS' || 
+                       pollResponse.data.payment_status === 'SUCCESS' || pollResponse.data.payment_status === 'TEST_SUCCESS')) {
                     clearInterval(wizardPollingInterval);
                     window.location.href = redirectUrl;
                   }
