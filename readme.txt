@@ -4,7 +4,7 @@ Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
 Tested up to: 6.8
-Stable tag: 1.0.5
+Stable tag: 1.0.7
 Requires PHP: 7.0
 Requires Plugins: woocommerce
 License: GPLv3 or later
@@ -28,6 +28,24 @@ SMEPay: UPI Gateway for WooCommerce is a WordPress plugin built specifically for
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 3. Go to WooCommerce > Settings > Payments to enable and configure SMEPay as a payment method.
 4. Enter your **SMEPay API credentials** (provided when you sign up for SMEPay) in the settings to enable payment processing.
+5. Setup the webhook URL (`https://yourdomain.com/wp-json/smepay/v1/webhook`) in your SMEPay dashboard.
+
+== Frequently Asked Questions ==
+
+= Does this plugin support all UPI apps? =
+Yes, customers can pay using any popular UPI app including Google Pay, PhonePe, Paytm, BHIM, etc.
+
+= Where can I find my SMEPay API credentials? =
+Log in to your SMEPay merchant dashboard to find your Client ID and Client Secret.
+
+= Is SSL required? =
+SSL (HTTPS) is required for production mode to secure connection between WooCommerce and SMEPay API.
+
+== Screenshots ==
+
+1. Configure SMEPay Gateway settings in WooCommerce admin.
+2. SMEPay checkout popup wizard on checkout page.
+3. SMEPay inline QR code option for checkout.
 
 == Requirements ==
 
@@ -35,7 +53,6 @@ SMEPay: UPI Gateway for WooCommerce is a WordPress plugin built specifically for
   - Verify SSL by checking for the padlock icon in your browser’s address bar.
   - If you don’t have SSL, please obtain one from your hosting provider before enabling SMEPay.
 
-== Frequently Asked Questions ==
 
 = What is SMEPay? =
 **SMEPay** is a payment gateway that enables WooCommerce store owners to accept payments through UPI (Unified Payments Interface) via QR codes. Customers scan the QR code with any UPI-enabled mobile app (like Google Pay, PhonePe, etc.) to make instant payments.
@@ -134,6 +151,12 @@ This plugin interacts with the following SMEPay-hosted domains:
 
 == Changelog ==
 
+= 1.0.7 =
+* Added `external_reference_id` to status check payload to fix status checks returning HTTP 404.
+
+= 1.0.6 =
+* Fixed classic checkout polling redirect to thank-you page by aligning status response keys in PHP and JS.
+
 = 1.0.5 =
 * Updated webhook flow to use the correct `_smepfowo_order_id` for ref_id.
 
@@ -165,6 +188,12 @@ This plugin interacts with the following SMEPay-hosted domains:
 
 == Upgrade Notice ==
 
+= 1.0.7 =
+* Fixes status check returning HTTP 404 error during checkout polling. Recommended update.
+
+= 1.0.6 =
+* Fixes classic checkout polling redirect to thank you page. Recommended update.
+
 = 1.0.5 =
 * Updated webhook flow to use the correct `_smepfowo_order_id` for ref_id.
 
@@ -172,7 +201,6 @@ This plugin interacts with the following SMEPay-hosted domains:
 * Fixed issue where full order validation ran for partial COD payments.
 * Improved thank-you page validation to correctly handle partial and full payments separately.
 * Enhanced overall gateway reliability and internal hook handling.
-
 
 = 1.0.3 =
 * Fixed issue with loading required include files by adding checks for file existence before requiring them.

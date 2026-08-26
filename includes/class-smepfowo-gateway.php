@@ -747,8 +747,9 @@ class SMEPFOWO_Gateway extends WC_Payment_Gateway {
 
         // Prepare payload
         $payload = [
-            'order_id'  => $smepfowo_order_id,
-            'client_id' => $this->client_id,
+            'order_id'              => $smepfowo_order_id,
+            'external_reference_id' => $smepfowo_order_id,
+            'client_id'             => $this->client_id,
         ];
 
         // Call SMEPay API
