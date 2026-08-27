@@ -3,7 +3,7 @@ Contributors: smepay, upnrunn
 Donate link: https://smepay.io/
 Tags: woocommerce, payment, upi, qr, india
 Requires at least: 4.7
-Tested up to: 6.8
+Tested up to: 7.1
 Stable tag: 1.0.7
 Requires PHP: 7.0
 Requires Plugins: woocommerce
